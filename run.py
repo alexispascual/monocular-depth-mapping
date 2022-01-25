@@ -9,17 +9,21 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-from utils import vizualizer
+from utils import visualizer
 from datasets.diode import DataGenerator
 from models.unet import DepthEstimationModel
 tf.random.set_seed(123)
 
 def main():
-    annotation_folder = "/downloads/"
+    annotation_folder = "./downloads"
 
-    if not os.path.exists(os.path.abspath(".") + annotation_folder):
+    if not os.path.exists(annotation_folder):
+
+        print("Downloading dataset...")
+        os.makedirs(annotation_folder)
+
         annotation_zip = tf.keras.utils.get_file(
-            "val.tar.gz",
+            os.path.join(annotation_folder, "val.tar.gz"),
             cache_subdir=os.path.abspath("."),
             origin="http://diode-dataset.s3.amazonaws.com/val.tar.gz",
             extract=True,
@@ -51,11 +55,11 @@ def main():
 
     visualize_samples = next(iter(DataGenerator(data=df, batch_size=6, dim=(HEIGHT, WIDTH))))
 
-    vizualizer.visualize_depth_map(visualize_samples)
+    visualizer.visualize_depth_map(visualize_samples)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=LR,
                                          amsgrad=False)
-    model = DepthEstimationModel()
+    model = DepthEstimationModel(width=WIDTH, height=HEIGHT)
 
     # Define the loss function
     cross_entropy = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction="none")
@@ -79,15 +83,13 @@ def main():
                                           batch_size=6, 
                                           dim=(HEIGHT, WIDTH))))
 
-    visualize_depth_map(test_loader, test=True, model=model)
+    visualizer.visualize_depth_map(test_loader, test=True, model=model)
 
     test_loader = next(iter(DataGenerator(data=df[300:].reset_index(drop="true"), 
                                           batch_size=6, 
                                           dim=(HEIGHT, WIDTH))))
 
-    visualize_depth_map(test_loader, test=True, model=model)
-
-
+    visualizer.visualize_depth_map(test_loader, test=True, model=model)
 
 if __name__ == '__main__':
     main()
