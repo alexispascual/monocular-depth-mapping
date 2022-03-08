@@ -1,3 +1,0 @@
-[submodule "zed_ros"]
-	path = zed_ros
-	url = https://github.com/alexispascual/zed_ros
