@@ -8,6 +8,8 @@ from tqdm import tqdm
 
 def main():
     data_directory = './downloads/moon_yard'
+    show_image = False
+    save_image = True
 
     for root, dirs, files in os.walk(data_directory):
         for directory in dirs:
@@ -21,14 +23,20 @@ def main():
             normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
 
             concat_images = np.concatenate((image, normalized_depth_map), axis = 1)
-            cv2.imshow('Image', concat_images)
 
-            key = cv2.waitKey(0)
+            if show_image:
+                cv2.imshow('Image', concat_images)
 
-            if key==27: # Check for ESC key press
-                break
-            else:
-                continue
+                key = cv2.waitKey(0)
+
+                if key==27: # Check for ESC key press
+                    break
+                else:
+                    continue
+
+            if save_image:
+                file_name = os.path.join(data_directory, directory, f'side_by_side_view_{directory}.jpg')
+                save_image(concat_images, file_name)
 
 
 def generate_depth_map(point_cloud):
@@ -50,6 +58,8 @@ def generate_depth_map(point_cloud):
     normalized_depth = (depth_estimate - np.min(depth_estimate)) / (np.max(depth_estimate) - np.min(depth_estimate))  * 255
 
     return normalized_depth.astype(np.uint8)
+
+def save_image(image, directory):
 
 if __name__ == '__main__':
     main()
