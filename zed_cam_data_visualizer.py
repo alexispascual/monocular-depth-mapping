@@ -8,8 +8,8 @@ from tqdm import tqdm
 
 def main():
     data_directory = './downloads/moon_yard'
-    show_images = True
-    save_images = False
+    show_images = False
+    save_images = True
     detect_edges = True
     generate_depth_maps = False
     ret = 0
@@ -103,14 +103,14 @@ def create_video():
     video_writer.release()
 
 def detect_edge(image):
-    image = cv2.GaussianBlur(image,(7,7), 0)
+    image = cv2.GaussianBlur(image,(5,5), 0)
     image = cv2.Canny(image, 100, 200)
 
     return image
 
 def show_image(image, image_2=None):
     if image_2.any():
-        image = np.concatenate((image, image_2), axis = 1)
+        image = np.concatenate((image, image_2), axis=1)
 
     cv2.imshow('Image', image)
 
@@ -123,9 +123,9 @@ def show_image(image, image_2=None):
 
 def save_image(image, image_2, data_directory, directory, file_name):
 
-    image = np.concatenate((image, image_2), axis = 1)
+    image = np.concatenate((image, image_2), axis=1)
     file_name = os.path.join(data_directory, directory, file_name)
-    cv2.imwrite(file_name, concat_images)
+    cv2.imwrite(file_name, image)
     
 if __name__ == '__main__':
     main()
