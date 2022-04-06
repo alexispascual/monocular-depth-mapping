@@ -8,35 +8,54 @@ from tqdm import tqdm
 
 def main():
     data_directory = './downloads/moon_yard'
-    show_image = False
-    save_image = True
+    show_images = True
+    save_images = False
+    detect_edges = True
+    generate_depth_maps = False
+    ret = 0
 
     for root, dirs, files in os.walk(data_directory):
         for directory in tqdm(dirs):
+            tqdm.write("Reading image...")
             image_file = os.path.join(data_directory, directory, f'zed_image_left_{directory}.jpg')
             image = cv2.imread(image_file)
             image = cv2.resize(image, (0, 0), None, .5, .5)
 
-            point_cloud = np.load(os.path.join(data_directory, directory, f'point_cloud_{directory}.npy'))
-            normalized_depth_map = generate_depth_map(point_cloud)
-            normalized_depth_map = cv2.resize(normalized_depth_map, (0, 0), None, .5, .5)
-            normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
+            if generate_depth_maps:
+                tqdm.write("Calculating depth from point cloud...") 
+                point_cloud = np.load(os.path.join(data_directory, directory, f'point_cloud_{directory}.npy'))
+                normalized_depth_map = generate_depth_map(point_cloud)
+                normalized_depth_map = cv2.resize(normalized_depth_map, (0, 0), None, .5, .5)
+                normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
 
-            concat_images = np.concatenate((image, normalized_depth_map), axis = 1)
+                if show_images:
+                    ret = show_image(image, normalized_depth_map)
 
-            if show_image:
-                cv2.imshow('Image', concat_images)
+                if save_images:
+                    save_image(image,
+                               normalized_depth_map,
+                               data_directory, 
+                               directory, 
+                               'normalized_depth.jpg')
 
-                key = cv2.waitKey(0)
+            if detect_edges:
+                tqdm.write("Detecting edges...")
 
-                if key==27: # Check for ESC key press
-                    break
-                else:
-                    continue
+                edges = detect_edge(image)
+                edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
-            if save_image:
-                file_name = os.path.join(data_directory, directory, f'side_by_side_view_{directory}.jpg')
-                cv2.imwrite(file_name, concat_images)
+                if show_images:
+                    ret = show_image(image, edges)
+
+                if save_images:
+                    save_image(image,
+                               edges,
+                               data_directory, 
+                               directory, 
+                               'edges.jpg')
+
+            if ret == -1:
+                break
 
         break
 
@@ -83,5 +102,30 @@ def create_video():
 
     video_writer.release()
 
+def detect_edge(image):
+    image = cv2.GaussianBlur(image,(7,7), 0)
+    image = cv2.Canny(image, 100, 200)
+
+    return image
+
+def show_image(image, image_2=None):
+    if image_2.any():
+        image = np.concatenate((image, image_2), axis = 1)
+
+    cv2.imshow('Image', image)
+
+    key = cv2.waitKey(0)
+
+    if key==27: # Check for ESC key press
+        return -1
+    else:
+        return 0
+
+def save_image(image, image_2, data_directory, directory, file_name):
+
+    image = np.concatenate((image, image_2), axis = 1)
+    file_name = os.path.join(data_directory, directory, file_name)
+    cv2.imwrite(file_name, concat_images)
+    
 if __name__ == '__main__':
-    create_video()
+    main()
