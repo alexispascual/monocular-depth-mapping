@@ -8,11 +8,17 @@ from tqdm import tqdm
 
 def main():
     data_directory = './downloads/moon_yard'
-    show_images = True
-    save_images = False
+    edges_directory = './downloads/edges'
+    normalized_depth_directory = './downloads/normalized_depth'
+
+    show_images = False
+    save_images = True
     detect_edges = True
     generate_depth_maps = False
     ret = 0
+
+    check_directory(edges_directory)
+    check_directory(normalized_depth_directory)
 
     for root, dirs, files in os.walk(data_directory):
         for directory in tqdm(dirs):
@@ -33,26 +39,23 @@ def main():
 
                 if save_images:
                     save_image(image,
-                               normalized_depth_map,
-                               data_directory, 
-                               directory, 
-                               'normalized_depth.jpg')
+                               normalized_depth_map, 
+                               normalized_depth_directory, 
+                               f'normalized_depth_{directory}.jpg')
 
             if detect_edges:
                 tqdm.write("Detecting edges...")
 
                 edges = detect_edge(image)
-                # edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
                 if show_images:
                     ret = show_image(image, edges)
 
                 if save_images:
                     save_image(image,
-                               edges,
-                               data_directory, 
-                               directory, 
-                               'edges.jpg')
+                               edges, 
+                               edges_directory, 
+                               f'edges_{directory}.jpg')
 
             if ret == -1:
                 break
@@ -113,19 +116,7 @@ def detect_edge(image):
     kernel = np.ones((3,3), np.uint8)
     image  = cv2.erode(image, kernel)
 
-    kernel = np.ones((5,5), np.uint8)
-    # image  = cv2.dilate(image, kernel)
-
-    # kernel = np.ones((3,3), np.uint8)
-    # image  = cv2.dilate(image, kernel)
-
     image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-    # lines = cv2.HoughLinesP(image, 1, np.pi / 180, 50, None, 50, 10)
-
-    # if lines is not None:
-    #     for i in range(0, len(lines)):
-    #         l = lines[i][0]
-    #         cv2.line(image_copy, (l[0], l[1]), (l[2], l[3]), (0,0,255), 3, cv2.LINE_AA)
 
     return image
 
@@ -142,11 +133,16 @@ def show_image(image, image_2=None):
     else:
         return 0
 
-def save_image(image, image_2, data_directory, directory, file_name):
+def save_image(image, image_2, directory, file_name):
 
     image = np.concatenate((image, image_2), axis=1)
-    file_name = os.path.join(data_directory, directory, file_name)
+    file_name = os.path.join(directory, file_name)
     cv2.imwrite(file_name, image)
+
+def check_directory(directory):
+    if not os.path.isdir(directory):
+        print(f"Creating directory {directory}")
+        os.makedirs(directory)
     
 if __name__ == '__main__':
     main()
