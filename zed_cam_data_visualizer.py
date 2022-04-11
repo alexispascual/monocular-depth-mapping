@@ -8,8 +8,8 @@ from tqdm import tqdm
 
 def main():
     data_directory = './downloads/moon_yard'
-    show_images = False
-    save_images = True
+    show_images = True
+    save_images = False
     detect_edges = True
     generate_depth_maps = False
     ret = 0
@@ -42,7 +42,7 @@ def main():
                 tqdm.write("Detecting edges...")
 
                 edges = detect_edge(image)
-                edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+                # edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
                 if show_images:
                     ret = show_image(image, edges)
@@ -104,7 +104,28 @@ def create_video():
 
 def detect_edge(image):
     image = cv2.GaussianBlur(image,(5,5), 0)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     image = cv2.Canny(image, 100, 200)
+
+    kernel = np.ones((5,5), np.uint8)
+    image  = cv2.dilate(image, kernel)
+
+    kernel = np.ones((3,3), np.uint8)
+    image  = cv2.erode(image, kernel)
+
+    kernel = np.ones((5,5), np.uint8)
+    # image  = cv2.dilate(image, kernel)
+
+    # kernel = np.ones((3,3), np.uint8)
+    # image  = cv2.dilate(image, kernel)
+
+    image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+    # lines = cv2.HoughLinesP(image, 1, np.pi / 180, 50, None, 50, 10)
+
+    # if lines is not None:
+    #     for i in range(0, len(lines)):
+    #         l = lines[i][0]
+    #         cv2.line(image_copy, (l[0], l[1]), (l[2], l[3]), (0,0,255), 3, cv2.LINE_AA)
 
     return image
 
