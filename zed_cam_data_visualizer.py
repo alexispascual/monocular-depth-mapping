@@ -10,16 +10,19 @@ from utils.create_mask import draw_mask
 def main():
     data_directory = './downloads/moon_yard'
     edges_directory = './downloads/edges'
+    horizon_directory = './downloads/horizons'
     normalized_depth_directory = './downloads/normalized_depth'
 
     show_images = True
     save_images = False
+    draw_mask_flag = True 
     detect_edges = True
     generate_depth_maps = False
     ret = 0
 
     check_directory(edges_directory)
     check_directory(normalized_depth_directory)
+    check_directory(horizon_directory)
 
     for root, dirs, files in os.walk(data_directory):
         for directory in tqdm(dirs):
@@ -51,8 +54,13 @@ def main():
                 
                 if show_images:
                     ret = show_image(image, edges)
-                    draw_mask(edges)
-                    
+
+                    if draw_mask_flag:
+                        draw_mask(edges)
+                        save_image(edges, 
+                                   directory=horizon_directory, 
+                                   file_name=f'horizon_{directory}.jpg')
+
                 if save_images:
                     save_image(image,
                                edges, 
@@ -101,8 +109,6 @@ def create_video():
                 image = cv2.imread(image_file)
 
                 video_writer.write(image)
-
-        
         break
 
     video_writer.release()
@@ -123,21 +129,26 @@ def detect_edge(image):
     return image
 
 def show_image(image, image_2=None):
-    if image_2.any():
+    if image_2 is not None:
         image = np.concatenate((image, image_2), axis=1)
 
     cv2.imshow('Image', image)
 
     key = cv2.waitKey(0)
 
-    if key==27: # Check for ESC key press
+    if key == 27: # Check for ESC key press
         return -1
     else:
         return 0
 
-def save_image(image, image_2, directory, file_name):
+def save_image(image, 
+               image_2=None, 
+               directory='./downloads', 
+               file_name='default_name.jpg'):
 
-    image = np.concatenate((image, image_2), axis=1)
+    if image_2 is not None:
+        image = np.concatenate((image, image_2), axis=1)
+    
     file_name = os.path.join(directory, file_name)
     cv2.imwrite(file_name, image)
 
