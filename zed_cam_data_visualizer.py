@@ -48,11 +48,11 @@ def main():
                 tqdm.write("Detecting edges...")
 
                 edges = detect_edge(image)
-                draw_mask(edges)
                 
                 if show_images:
                     ret = show_image(image, edges)
-
+                    draw_mask(edges)
+                    
                 if save_images:
                     save_image(image,
                                edges, 
