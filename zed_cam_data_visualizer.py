@@ -5,14 +5,15 @@ import math
 
 from pprint import pprint as pp
 from tqdm import tqdm
+from utils.create_mask import draw_mask
 
 def main():
     data_directory = './downloads/moon_yard'
     edges_directory = './downloads/edges'
     normalized_depth_directory = './downloads/normalized_depth'
 
-    show_images = False
-    save_images = True
+    show_images = True
+    save_images = False
     detect_edges = True
     generate_depth_maps = False
     ret = 0
@@ -47,7 +48,8 @@ def main():
                 tqdm.write("Detecting edges...")
 
                 edges = detect_edge(image)
-
+                draw_mask(edges)
+                
                 if show_images:
                     ret = show_image(image, edges)
 
