@@ -6,6 +6,7 @@ import math
 from pprint import pprint as pp
 from tqdm import tqdm
 from utils.create_mask import draw_mask
+from utils.tools import check_directory, save_image, show_image
 
 def main():
     data_directory = './data/moon_yard'
@@ -127,35 +128,6 @@ def detect_edge(image):
     image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
     return image
-
-def show_image(image, image_2=None):
-    if image_2 is not None:
-        image = np.concatenate((image, image_2), axis=1)
-
-    cv2.imshow('Image', image)
-
-    key = cv2.waitKey(0)
-
-    if key == 27: # Check for ESC key press
-        return -1
-    else:
-        return 0
-
-def save_image(image, 
-               image_2=None, 
-               directory='./data', 
-               file_name='default_name.jpg'):
-
-    if image_2 is not None:
-        image = np.concatenate((image, image_2), axis=1)
-    
-    file_name = os.path.join(directory, file_name)
-    cv2.imwrite(file_name, image)
-
-def check_directory(directory):
-    if not os.path.isdir(directory):
-        print(f"Creating directory {directory}")
-        os.makedirs(directory)
     
 if __name__ == '__main__':
     main()
