@@ -8,10 +8,10 @@ from tqdm import tqdm
 from utils.create_mask import draw_mask
 
 def main():
-    data_directory = './downloads/moon_yard'
-    edges_directory = './downloads/edges'
-    horizon_directory = './downloads/horizons'
-    normalized_depth_directory = './downloads/normalized_depth'
+    data_directory = './data/moon_yard'
+    edges_directory = './data/edges'
+    horizon_directory = './data/horizons'
+    normalized_depth_directory = './data/normalized_depth'
 
     show_images = True
     save_images = False
@@ -93,7 +93,7 @@ def generate_depth_map(point_cloud):
     return normalized_depth.astype(np.uint8)
 
 def create_video():
-    data_directory = './downloads/moon_yard'
+    data_directory = './data/moon_yard'
 
     fourcc = cv2.VideoWriter_fourcc(*'X264')
     video_writer = cv2.VideoWriter(filename='depth_map_husky.mp4', 
@@ -143,7 +143,7 @@ def show_image(image, image_2=None):
 
 def save_image(image, 
                image_2=None, 
-               directory='./downloads', 
+               directory='./data', 
                file_name='default_name.jpg'):
 
     if image_2 is not None:
