@@ -1,5 +1,6 @@
 import os
 import cv2
+import numpy as np
 
 def check_directory(directory: str):
     if not os.path.isdir(directory):
@@ -34,7 +35,7 @@ def scan_horizon_files(directory: str):
 
     horizons = []
 
-    for root, dirs, files in os.walk(data_directory):
+    for root, dirs, files in os.walk(directory):
         horizons = [f.split('.')[0].split('_')[1] for f in files]
 
     return horizons

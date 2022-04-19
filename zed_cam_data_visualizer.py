@@ -6,7 +6,7 @@ import math
 from pprint import pprint as pp
 from tqdm import tqdm
 from utils.create_mask import draw_mask
-from utils.tools import check_directory, save_image, show_image
+from utils.tools import check_directory, save_image, show_image, scan_horizon_files
 
 def main():
     data_directory = './data/moon_yard'
@@ -60,10 +60,9 @@ def main():
 
                     if draw_mask_flag:
                         if directory not in horizon_files:
-                            draw_mask(edges)
-                            save_image(edges, 
-                                       directory=horizon_directory, 
-                                       file_name=f'horizon_{directory}.jpg')
+                            draw_mask(edges, 
+                                      horizon_directory, 
+                                      directory)
 
                 if save_images:
                     save_image(image,
