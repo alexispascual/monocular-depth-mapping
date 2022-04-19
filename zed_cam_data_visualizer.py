@@ -25,6 +25,8 @@ def main():
     check_directory(normalized_depth_directory)
     check_directory(horizon_directory)
 
+    horizon_files = scan_horizon_files(horizon_directory)
+
     for root, dirs, files in os.walk(data_directory):
         for directory in tqdm(dirs):
             tqdm.write("Reading image...")
@@ -57,10 +59,11 @@ def main():
                     ret = show_image(image, edges)
 
                     if draw_mask_flag:
-                        draw_mask(edges)
-                        save_image(edges, 
-                                   directory=horizon_directory, 
-                                   file_name=f'horizon_{directory}.jpg')
+                        if directory not in horizon_files:
+                            draw_mask(edges)
+                            save_image(edges, 
+                                       directory=horizon_directory, 
+                                       file_name=f'horizon_{directory}.jpg')
 
                 if save_images:
                     save_image(image,
