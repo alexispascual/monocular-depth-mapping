@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+from copy import deepcopy
 from pprint import pprint as pp
 
 def check_directory(directory: str):
@@ -43,17 +44,16 @@ def scan_horizon_files(directory: str):
 
 def fill_horizon_line(image):
 
-    pp(image)
-    pp(image.shape)
-    horizon_line = np.argmax(image, axis=0)
+    copy_image = image.copy()
+    copy_image = cv2.flip(image, 0)
 
-    pp(horizon_line)
-    pp(horizon_line.shape)
-
+    horizon_line = np.argmax(copy_image, axis=0)
+    
     height = image.shape[0]
     width = image.shape[1]
 
     for col in range(width):
-        image[0:horizon_line[col][0], col] = (255, 255, 255)
+        corrected_horizon = horizon_line[col][0] - height - 1
+        image[0:corrected_horizon, col] = (255, 255, 255)
 
-    return image
+    return cv2.flip(image, 0)
