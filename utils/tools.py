@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+from pprint import pprint as pp
 
 def check_directory(directory: str):
     if not os.path.isdir(directory):
@@ -39,3 +40,20 @@ def scan_horizon_files(directory: str):
         horizons = [f.split('.')[0].split('_')[1] for f in files]
 
     return horizons
+
+def fill_horizon_line(image):
+
+    pp(image)
+    pp(image.shape)
+    horizon_line = np.argmax(image, axis=0)
+
+    pp(horizon_line)
+    pp(horizon_line.shape)
+
+    height = image.shape[0]
+    width = image.shape[1]
+
+    for col in range(width):
+        image[0:horizon_line[col][0], col] = (255, 255, 255)
+
+    return image

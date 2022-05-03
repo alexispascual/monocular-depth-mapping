@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-from utils.tools import save_image
+from utils.tools import save_image, fill_horizon_line
 
 drawing = False # true if mouse is pressed
 mode = True # if True, draw rectangle. Press 'm' to toggle to curve
@@ -41,15 +41,17 @@ def draw_mask(edges, horizon_directory: str, directory: str):
     while(1):
         cv2.imshow('Edges', image)
         key = cv2.waitKey(1) & 0xFF
-        if key == ord('m'):
+        if key == ord('a'):
             mode = not mode
-        elif key == ord('c'):
+        elif key == ord('d'):
             if colour_flag:
                 colour = (255,255,255)
             else:
                 colour = (0,0,0)
             
             colour_flag = not colour_flag
+        elif key == ord('f'):
+            image = fill_horizon_line(image)
 
         elif key == 27:
             break
