@@ -53,7 +53,7 @@ def draw_mask(edges, horizon_directory: str, directory: str):
         elif key == ord('f'):
             image = fill_horizon_line(image)
 
-        elif key == ord('q'):
+        elif key == ord('q') or key == 27:
             break
 
         elif key == ord('s'):
