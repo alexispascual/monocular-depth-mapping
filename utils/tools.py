@@ -57,3 +57,16 @@ def fill_horizon_line(image):
         image[0:corrected_horizon, col] = (255, 255, 255)
 
     return cv2.flip(image, 0)
+
+def fill_horizon_line_top_down(image):
+
+    horizon_line = np.argmax(image, axis=0)
+    
+    height = image.shape[0]
+    width = image.shape[1]
+
+    for col in range(width):
+        image[0:horizon_line[col][0], col] = (0, 0, 0)
+        image[horizon_line[col][0] + 1:height - 1, col] = (255, 255, 255)
+
+    return image
