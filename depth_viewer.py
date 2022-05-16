@@ -28,7 +28,10 @@ def main():
             depth_map = np.load(depth_file)
 
             point_cloud_file = os.path.join(data_directory, directory, f'point_cloud_{directory}.npy')
-            point_cloud = np.load(point_cloud_file)
-            
+            point_cloud = np.load(point_cloud_file)\
+            depth_estimate = tools.generate_depth_map(point_cloud)
+
+            view_depth(image, depth_map, depth_estimate)
+
 if __name__ == '__main__':
     main()
