@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 from tqdm import tqdm
-from utils import tools
+from utils import tools, view_depth
 
 def main():
 
@@ -17,6 +17,8 @@ def main():
     data_directory = directories['data_directory']
     horizon_directory = directories['horizon_directory']
     
+    ret = 0
+
     for root, dirs, files in os.walk(data_directory):
         for directory in tqdm(dirs):
             tqdm.write("Reading data...")
@@ -28,10 +30,15 @@ def main():
             depth_map = np.load(depth_file)
 
             point_cloud_file = os.path.join(data_directory, directory, f'point_cloud_{directory}.npy')
-            point_cloud = np.load(point_cloud_file)\
+            point_cloud = np.load(point_cloud_file)
+            tqdm.write("Calculating depth from point cloud...")
             depth_estimate = tools.generate_depth_map(point_cloud)
 
-            view_depth(image, depth_map, depth_estimate)
+            ret = view_depth.display_depth(image, depth_map, depth_estimate)
 
+            if ret == -1:
+                break
+
+        break
 if __name__ == '__main__':
     main()

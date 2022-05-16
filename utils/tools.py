@@ -1,5 +1,8 @@
 import os
 import cv2
+import sys
+import yaml
+import math
 import numpy as np
 from copy import deepcopy
 from pprint import pprint as pp
@@ -25,7 +28,7 @@ def load_config(default_config: str, silent=False):
         y = yaml.full_load(f)
         if not silent:
             print('Experimental parameters\n------')
-            pprint(y)
+            pp(y)
         return y
 
 def check_directory(directory: str):

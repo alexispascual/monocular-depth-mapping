@@ -1,33 +1,43 @@
 import os
 import cv2
+import numpy as np
 
 image = None
 depth_map = None
 depth_from_point_cloud = None
-depth_position = (10, 50)
-depth_estimate_position = (10, 70)
+depth_position = (10, 10)
+depth_estimate_position = (10, 20)
 
-def display_depth(event, x, y, flags, param):
+def write_depth(event, x, y, flags, param):
+
+    depth = depth_map[y, x]
+    depth_estimate = depth_from_point_cloud[y, x]
 
     if event == cv2.EVENT_LBUTTONUP:
-        depth = depth_map[x, y]
-        depth_estimate = depth_from_point_cloud[x, y]
 
         cv2.putText(image, 
-                    f"Depth = {depth}",
+                    f"{depth = :.2f}",
                     depth_position,
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
+                    0.5,
                     (0, 255, 0))
 
         cv2.putText(image, 
-                    f"Depth Estimate = {depth_estimate}",
+                    f"{depth_estimate = :.2f}",
                     depth_estimate_position,
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
+                    0.5,
                     (0, 255, 0))
 
-def view_depth(_image, _depth_map, _depth_from_point_cloud):
+    elif event == cv2.EVENT_LBUTTONDOWN:
+       
+        cv2.rectangle(image,
+                      (0,0),
+                      (205, 25),
+                      (0, 0, 0),
+                      -1)
+
+def display_depth(_image, _depth_map, _depth_from_point_cloud):
     global image, depth_map, depth_from_point_cloud
 
     image = _image
@@ -35,8 +45,16 @@ def view_depth(_image, _depth_map, _depth_from_point_cloud):
     depth_from_point_cloud = _depth_from_point_cloud
 
     cv2.namedWindow('Depth')
-    cv2.setMouseCallback('Depth', display_depth)
+    cv2.setMouseCallback('Depth', write_depth)
 
     while(1):
         cv2.imshow('Depth', image)
+
+        key = cv2.waitKey(1) & 0xFF
+
+        if key == 27:
+            cv2.destroyAllWindows()
+            return -1
+
+
 
