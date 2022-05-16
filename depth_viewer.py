@@ -24,17 +24,12 @@ def main():
             tqdm.write("Reading data...")
 
             image_file = os.path.join(data_directory, directory, f'zed_image_left_{directory}.jpg')
+            depth_file = os.path.join(data_directory, directory, f'depth_map_{directory}.npy')
+            point_cloud_file = os.path.join(data_directory, directory, f'point_cloud_{directory}.npy')
+
             image = cv2.imread(image_file)
 
-            depth_file = os.path.join(data_directory, directory, f'depth_map_{directory}.npy')
-            depth_map = np.load(depth_file)
-
-            point_cloud_file = os.path.join(data_directory, directory, f'point_cloud_{directory}.npy')
-            point_cloud = np.load(point_cloud_file)
-            tqdm.write("Calculating depth from point cloud...")
-            depth_estimate = tools.generate_depth_map(point_cloud)
-
-            ret = view_depth.display_depth(image, depth_map, depth_estimate)
+            ret = view_depth.display_depth(image, depth_file, point_cloud_file)
 
             if ret == -1:
                 break
