@@ -4,6 +4,30 @@ import numpy as np
 from copy import deepcopy
 from pprint import pprint as pp
 
+def load_config(default_config: str, silent=False):
+    """
+    Multi-use function. Exposes command-line to provide alternative configurations to training scripts.
+    Also works as a stand-alone configuration importer in notebooks and scripts.
+    """
+    if len(sys.argv) == 1:
+        # Then the file being called is the only argument so return the default configuration
+        config_file = default_config
+    elif len(sys.argv) == 2:
+        # Then a specific configuration file has been used so load it
+        config_file = str(sys.argv[1])
+    elif all([len(sys.argv) == 3, sys.argv[1] == '-f']):
+        config_file = default_config
+    else:
+        print(sys.argv)
+        raise ValueError('CLI only accepts 0 args (default) or 1 arg (path/to/config).')
+
+    with open(str(config_file), 'r') as f:
+        y = yaml.full_load(f)
+        if not silent:
+            print('Experimental parameters\n------')
+            pprint(y)
+        return y
+
 def check_directory(directory: str):
     if not os.path.isdir(directory):
         print(f"Creating directory {directory}")
