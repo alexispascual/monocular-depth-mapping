@@ -94,3 +94,28 @@ def fill_horizon_line_top_down(image):
         image[horizon_line[col][0] + 1:height - 1, col] = (255, 255, 255)
 
     return image
+
+def generate_depth_map(point_cloud: np.ndarray, 
+                       normalize: bool=False):
+
+    depth_estimate = np.zeros((point_cloud.shape[0], point_cloud.shape[1]))
+    point_cloud = np.nan_to_num(point_cloud)
+
+    for w in range(point_cloud.shape[0]):
+        for h in range(point_cloud.shape[1]):
+            value = point_cloud[w][h]
+
+            if not np.isnan(value.any()):
+                depth_estimate[w][h] = math.sqrt(value[0] * value[0] + 
+                                                 value[1] * value[1] + 
+                                                 value[2] * value[2])
+            else:
+                depth_estimate[w][h] = 0
+
+    if normalize:
+        normalized_depth = (depth_estimate - np.min(depth_estimate)) / (np.max(depth_estimate) - np.min(depth_estimate))  * 255
+
+        return normalized_depth.astype(np.uint8)
+
+    else:
+        return depth_estimate
