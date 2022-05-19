@@ -5,8 +5,10 @@ import math
 
 from pprint import pprint as pp
 from tqdm import tqdm
+
+from utils import tools
 from utils.create_mask import draw_mask
-from utils.tools import check_directory, save_image, show_image, scan_horizon_files
+
 
 def main():
     data_directory = './data/moon_yard'
@@ -21,11 +23,11 @@ def main():
     generate_depth_maps = False
     ret = 0
 
-    check_directory(edges_directory)
-    check_directory(normalized_depth_directory)
-    check_directory(horizon_directory)
+    tools.check_directory(edges_directory)
+    tools.check_directory(normalized_depth_directory)
+    tools.check_directory(horizon_directory)
 
-    horizon_files = scan_horizon_files(horizon_directory)
+    horizon_files = tools.scan_horizon_files(horizon_directory)
 
     for root, dirs, files in os.walk(data_directory):
         for directory in tqdm(dirs):
@@ -37,15 +39,15 @@ def main():
             if generate_depth_maps:
                 tqdm.write("Calculating depth from point cloud...") 
                 point_cloud = np.load(os.path.join(data_directory, directory, f'point_cloud_{directory}.npy'))
-                normalized_depth_map = generate_depth_map(point_cloud)
+                normalized_depth_map = tools.generate_depth_map(point_cloud, normalize=True)
                 normalized_depth_map = cv2.resize(normalized_depth_map, (0, 0), None, .5, .5)
                 normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
 
                 if show_images:
-                    ret = show_image(image, normalized_depth_map)
+                    ret = tools.show_image(image, normalized_depth_map)
 
                 if save_images:
-                    save_image(image,
+                    tools.save_image(image,
                                normalized_depth_map, 
                                normalized_depth_directory, 
                                f'normalized_depth_{directory}.jpg')
@@ -56,7 +58,7 @@ def main():
                 edges = detect_edge(image)
                 
                 if show_images:
-                    ret = show_image(image, edges)
+                    ret = tools.show_image(image, edges)
 
                     if draw_mask_flag:
                         if directory not in horizon_files:
@@ -65,7 +67,7 @@ def main():
                                       directory)
 
                 if save_images:
-                    save_image(image,
+                    tools.save_image(image,
                                edges, 
                                edges_directory, 
                                f'edges_{directory}.jpg')
@@ -74,26 +76,6 @@ def main():
                 break
 
         break
-
-def generate_depth_map(point_cloud):
-
-    depth_estimate = np.zeros((point_cloud.shape[0], point_cloud.shape[1]))
-    point_cloud = np.nan_to_num(point_cloud)
-
-    for w in range(point_cloud.shape[0]):
-        for h in range(point_cloud.shape[1]):
-            value = point_cloud[w][h]
-
-            if not np.isnan(value.any()):
-                depth_estimate[w][h] = math.sqrt(value[0] * value[0] + 
-                                                 value[1] * value[1] + 
-                                                 value[2] * value[2])
-            else:
-                depth_estimate[w][h] = 0
-
-    normalized_depth = (depth_estimate - np.min(depth_estimate)) / (np.max(depth_estimate) - np.min(depth_estimate))  * 255
-
-    return normalized_depth.astype(np.uint8)
 
 def create_video():
     data_directory = './data/moon_yard'

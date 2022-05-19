@@ -1,8 +1,35 @@
 import os
 import cv2
+import sys
+import yaml
+import math
 import numpy as np
 from copy import deepcopy
 from pprint import pprint as pp
+
+def load_config(default_config: str, silent=False):
+    """
+    Multi-use function. Exposes command-line to provide alternative configurations to training scripts.
+    Also works as a stand-alone configuration importer in notebooks and scripts.
+    """
+    if len(sys.argv) == 1:
+        # Then the file being called is the only argument so return the default configuration
+        config_file = default_config
+    elif len(sys.argv) == 2:
+        # Then a specific configuration file has been used so load it
+        config_file = str(sys.argv[1])
+    elif all([len(sys.argv) == 3, sys.argv[1] == '-f']):
+        config_file = default_config
+    else:
+        print(sys.argv)
+        raise ValueError('CLI only accepts 0 args (default) or 1 arg (path/to/config).')
+
+    with open(str(config_file), 'r') as f:
+        y = yaml.full_load(f)
+        if not silent:
+            print('Experimental parameters\n------')
+            pp(y)
+        return y
 
 def check_directory(directory: str):
     if not os.path.isdir(directory):
@@ -70,3 +97,28 @@ def fill_horizon_line_top_down(image):
         image[horizon_line[col][0] + 1:height - 1, col] = (255, 255, 255)
 
     return image
+
+def generate_depth_map(point_cloud: np.ndarray, 
+                       normalize: bool=False):
+
+    depth_estimate = np.zeros((point_cloud.shape[0], point_cloud.shape[1]))
+    point_cloud = np.nan_to_num(point_cloud)
+
+    for w in range(point_cloud.shape[0]):
+        for h in range(point_cloud.shape[1]):
+            value = point_cloud[w][h]
+
+            if not np.isnan(value.any()):
+                depth_estimate[w][h] = math.sqrt(value[0] * value[0] + 
+                                                 value[1] * value[1] + 
+                                                 value[2] * value[2])
+            else:
+                depth_estimate[w][h] = 0
+
+    if normalize:
+        normalized_depth = (depth_estimate - np.min(depth_estimate)) / (np.max(depth_estimate) - np.min(depth_estimate))  * 255
+
+        return normalized_depth.astype(np.uint8)
+
+    else:
+        return depth_estimate
