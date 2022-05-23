@@ -1,4 +1,3 @@
-import os
 import cv2
 import numpy as np
 
@@ -11,6 +10,7 @@ depth_from_point_cloud = None
 depth_loaded = False
 depth_position = (10, 10)
 depth_estimate_position = (10, 20)
+
 
 def write_depth(event, x, y, flags, param):
 
@@ -29,6 +29,7 @@ def write_depth(event, x, y, flags, param):
 
     elif event == cv2.EVENT_LBUTTONDOWN:
         clear_image_text()
+
 
 def display_depth(_image, depth_map_file, point_cloud_file):
     global image, depth_map, depth_from_point_cloud, depth_loaded
@@ -62,12 +63,14 @@ def display_depth(_image, depth_map_file, point_cloud_file):
         elif key == ord(' '):
             return 0
 
+
 def clear_image_text():
     cv2.rectangle(image,
-                      (0,0),
-                      (205, 25),
-                      (0, 0, 0),
-                      -1)
+                  (0, 0),
+                  (205, 25),
+                  (0, 0, 0),
+                  -1)
+
 
 def write_image_text(text: str, position):
     cv2.putText(image, 

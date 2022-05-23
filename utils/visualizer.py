@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 
+
 def visualize_depth_map(samples, test=False, model=None):
     input, target = samples
     cmap = plt.cm.jet

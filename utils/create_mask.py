@@ -1,34 +1,35 @@
-import numpy as np
 import cv2
 
 from utils.tools import save_image, fill_horizon_line, fill_horizon_line_top_down
 
-drawing = False # true if mouse is pressed
-mode = True # if True, draw rectangle. Press 'm' to toggle to curve
+drawing = False  # true if mouse is pressed
+mode = True  # if True, draw rectangle. Press 'm' to toggle to curve
 colour_flag = True
-colour = (0,0,0)
-ix,iy = -1,-1
+colour = (0, 0, 0)
+ix, iy = -1, -1
 image = None
+
 
 def draw_pixels(event, x, y, flags, param):
 
-    global ix,iy,drawing,mode
+    global ix, iy, drawing, mode
 
     if event == cv2.EVENT_LBUTTONDOWN:
         drawing = True
-        ix,iy = x,y
+        ix, iy = x, y
     elif event == cv2.EVENT_MOUSEMOVE:
-        if drawing == True:
-            if mode == True:
-                cv2.rectangle(image, (ix,iy), (x,y), colour, -1)
+        if drawing:
+            if mode:
+                cv2.rectangle(image, (ix, iy), (x, y), colour, -1)
             else:
-                cv2.circle(image,(x,y), 2, colour, -1)
+                cv2.circle(image, (x, y), 2, colour, -1)
     elif event == cv2.EVENT_LBUTTONUP:
         drawing = False
-        if mode == True:
-            cv2.rectangle(image, (ix,iy), (x,y), colour, -1)
+        if mode:
+            cv2.rectangle(image, (ix, iy), (x, y), colour, -1)
         else:
-            cv2.circle(image, (x,y), 2, colour, -1)
+            cv2.circle(image, (x, y), 2, colour, -1)
+
 
 def draw_mask(edges, horizon_directory: str, directory: str):
 
@@ -45,9 +46,9 @@ def draw_mask(edges, horizon_directory: str, directory: str):
             mode = not mode
         elif key == ord('d'):
             if colour_flag:
-                colour = (255,255,255)
+                colour = (255, 255, 255)
             else:
-                colour = (0,0,0)
+                colour = (0, 0, 0)
         
             colour_flag = not colour_flag
 

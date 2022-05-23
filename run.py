@@ -14,8 +14,9 @@ from datasets.diode import DataGenerator
 from models.unet import DepthEstimationModel
 tf.random.set_seed(123)
 
+
 def main():
-    annotation_folder = "./downloads"
+    annotation_folder = "./data"
 
     if not os.path.exists(annotation_folder):
 
@@ -29,7 +30,7 @@ def main():
             extract=True,
         )
 
-    path = "./downloads/val/indoors"
+    path = "./data/val/indoors"
 
     filelist = []
 
@@ -90,6 +91,7 @@ def main():
                                           dim=(HEIGHT, WIDTH))))
 
     visualizer.visualize_depth_map(test_loader, test=True, model=model)
+
 
 if __name__ == '__main__':
     main()

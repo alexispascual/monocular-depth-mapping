@@ -4,8 +4,9 @@ import sys
 import yaml
 import math
 import numpy as np
-from copy import deepcopy
+
 from pprint import pprint as pp
+
 
 def load_config(default_config: str, silent=False):
     """
@@ -31,10 +32,12 @@ def load_config(default_config: str, silent=False):
             pp(y)
         return y
 
+
 def check_directory(directory: str):
     if not os.path.isdir(directory):
         print(f"Creating directory {directory}")
         os.makedirs(directory)
+
 
 def show_image(image, image_2=None):
     if image_2 is not None:
@@ -44,10 +47,11 @@ def show_image(image, image_2=None):
 
     key = cv2.waitKey(0)
 
-    if key == 27: # Check for ESC key press
+    if key == 27:  # Check for ESC key press
         return -1
     else:
         return 0
+
 
 def save_image(image, 
                image_2=None, 
@@ -60,6 +64,7 @@ def save_image(image,
     file_name = os.path.join(directory, file_name)
     cv2.imwrite(file_name, image)
 
+
 def scan_horizon_files(directory: str):
 
     horizons = []
@@ -68,6 +73,7 @@ def scan_horizon_files(directory: str):
         horizons = [f.split('.')[0].split('_')[1] for f in files]
 
     return horizons
+
 
 def fill_horizon_line(image):
 
@@ -85,6 +91,7 @@ def fill_horizon_line(image):
 
     return cv2.flip(image, 0)
 
+
 def fill_horizon_line_top_down(image):
 
     horizon_line = np.argmax(image, axis=0)
@@ -98,8 +105,9 @@ def fill_horizon_line_top_down(image):
 
     return image
 
+
 def generate_depth_map(point_cloud: np.ndarray, 
-                       normalize: bool=False):
+                       normalize: bool = False):
 
     depth_estimate = np.zeros((point_cloud.shape[0], point_cloud.shape[1]))
     point_cloud = np.nan_to_num(point_cloud)
@@ -109,14 +117,14 @@ def generate_depth_map(point_cloud: np.ndarray,
             value = point_cloud[w][h]
 
             if not np.isnan(value.any()):
-                depth_estimate[w][h] = math.sqrt(value[0] * value[0] + 
-                                                 value[1] * value[1] + 
-                                                 value[2] * value[2])
+                depth_estimate[w][h] = math.sqrt(value[0] * value[0] 
+                                                 + value[1] * value[1]
+                                                 + value[2] * value[2])
             else:
                 depth_estimate[w][h] = 0
 
     if normalize:
-        normalized_depth = (depth_estimate - np.min(depth_estimate)) / (np.max(depth_estimate) - np.min(depth_estimate))  * 255
+        normalized_depth = (depth_estimate - np.min(depth_estimate)) / (np.max(depth_estimate) - np.min(depth_estimate)) * 255
 
         return normalized_depth.astype(np.uint8)
 

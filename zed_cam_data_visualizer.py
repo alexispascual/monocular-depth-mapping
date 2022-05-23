@@ -1,9 +1,7 @@
 import os
 import cv2
 import numpy as np
-import math
 
-from pprint import pprint as pp
 from tqdm import tqdm
 
 from utils import tools
@@ -48,9 +46,9 @@ def main():
 
                 if save_images:
                     tools.save_image(image,
-                               normalized_depth_map, 
-                               normalized_depth_directory, 
-                               f'normalized_depth_{directory}.jpg')
+                                     normalized_depth_map, 
+                                     normalized_depth_directory, 
+                                     f'normalized_depth_{directory}.jpg')
 
             if detect_edges:
                 tqdm.write("Detecting edges...")
@@ -68,14 +66,15 @@ def main():
 
                 if save_images:
                     tools.save_image(image,
-                               edges, 
-                               edges_directory, 
-                               f'edges_{directory}.jpg')
+                                     edges, 
+                                     edges_directory, 
+                                     f'edges_{directory}.jpg')
 
             if ret == -1:
                 break
 
         break
+
 
 def create_video():
     data_directory = './data/moon_yard'
@@ -98,20 +97,22 @@ def create_video():
 
     video_writer.release()
 
+
 def detect_edge(image):
-    image = cv2.GaussianBlur(image,(5,5), 0)
+    image = cv2.GaussianBlur(image, (5, 5), 0)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     image = cv2.Canny(image, 100, 200)
 
-    kernel = np.ones((5,5), np.uint8)
-    image  = cv2.dilate(image, kernel)
+    kernel = np.ones((5, 5), np.uint8)
+    image = cv2.dilate(image, kernel)
 
-    kernel = np.ones((3,3), np.uint8)
-    image  = cv2.erode(image, kernel)
+    kernel = np.ones((3, 3), np.uint8)
+    image = cv2.erode(image, kernel)
 
     image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
     return image
     
+
 if __name__ == '__main__':
     main()
