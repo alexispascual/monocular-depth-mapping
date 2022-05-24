@@ -135,3 +135,6 @@ dmypy.json
 # Sublime project settings
 *.sublime-project
 *.sublime-workspace
+
+# Pyright configs
+pyrightconfig.json
