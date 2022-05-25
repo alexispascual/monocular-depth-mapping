@@ -1,9 +1,11 @@
 import os
 import cv2
+import math
 import numpy as np
 import tensorflow as tf
-from tqdm import tqdm
 
+from tqdm import tqdm
+from sklearn.utils import shuffle
 from .base_dataset import BaseDataset
 
 
@@ -18,7 +20,8 @@ class MoonYardDataset(BaseDataset):
                  image_height: int,
                  image_width: int,
                  channels: int,
-                 batch_size: int
+                 batch_size: int,
+                 train_test_split: float
                  ):
         super(BaseDataset, self).__init__()
 
@@ -30,29 +33,56 @@ class MoonYardDataset(BaseDataset):
         self._channels = channels
         self._batch_size = batch_size
 
-        self.image_file_paths = []
-        self.mask_file_paths = []
-        self.depth_file_paths = []
-        self.point_cloud_file_paths = []
+        # self.image_file_paths = []
+        # self.mask_file_paths = []
+        # self.depth_file_paths = []
+        # self.point_cloud_file_paths = []
+        self.folder_names = []
 
-        tqdm.write("Generating file lists...")
+        tqdm.write("Generating file list...")
         for _, dirs, _ in os.walk(root_folder):
             for directory in dirs:
-                self.image_file_paths.append(os.path.join(self.root_folder, directory, f'zed_image_left_{directory}.jpg'))
-                self.depth_file_paths.append(os.path.join(self.root_folder, directory, f'depth_map_{directory}.npy'))
-                self.point_cloud_file_paths.append(os.path.join(self.root_folder, directory, f'point_cloud_{directory}.npy'))
-
-        for _, _, files in os.walk(masks_folder):
-            for f in files:
-                self.mask_file_paths.append(os.path.join(self.masks_folder, f))
+                self.folder_names.append(directory)
 
         tqdm.write("Done!")
+        tqdm.write(f"{len(self.folder_names)} files found.")
+
+        self.folder_names = shuffle(self.folder_names)
+
+        train_split = math.floor(train_test_split * len(self.folder_names))
+        self.train_folders = self.folder_names[:train_split]
+        self.test_folders = self.folder_names[train_split:]
+
+        tqdm.write(f"{len(self.train_folders)} training files...")
+        tqdm.write(f"{len(self.test_folders)} testing files...")
 
     def train_generator(self):
-        for image_file, depth_file, mask_file in zip(self.image_file_paths, self.depth_file_paths, self.mask_file_paths):
-            image = cv2.imread(image_file)
+
+        for dirname in self.train_folders:
+            image_path = os.path.join(self.root_folder, dirname, f'zed_image_left_{dirname}.jpg')
+            depth_file_path = os.path.join(self.root_folder, dirname, f'depth_map_{dirname}.npy')
+            # pount_cloud_file = os.path.join(self.root_folder, dirname, f'point_cloud_{dirname}.npy')
+
+            mask_file = os.path.join(self.masks_folder, f'horizon_{dirname}.jpg')
+
+            image = cv2.imread(image_path)
             mask = cv2.imread(mask_file)
-            depth = np.load(depth_file)
+            depth = np.load(depth_file_path)
+
+            yield image, depth
+
+    def test_generator(self):
+
+        for dirname in self.test_folders:
+            image_path = os.path.join(self.root_folder, dirname, f'zed_image_left_{dirname}.jpg')
+            depth_file_path = os.path.join(self.root_folder, dirname, f'depth_map_{dirname}.npy')
+            # pount_cloud_file = os.path.join(self.root_folder, dirname, f'point_cloud_{dirname}.npy')
+            
+            mask_file = os.path.join(self.masks_folder, f'horizon_{dirname}.jpg')
+
+            image = cv2.imread(image_path)
+            mask = cv2.imread(mask_file)
+            depth = np.load(depth_file_path)
 
             yield image, depth
 
@@ -73,13 +103,23 @@ class MoonYardDataset(BaseDataset):
                                               output_types=(tf.float32, tf.float32)
                                               ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
 
+    def generate_test_dataset(self):
+        return tf.data.Dataset.from_generator(self.train_generator,
+                                              output_types=(tf.float32, tf.float32)
+                                              ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
+
     def prepare(self):
-        self._image_dataset = self.generate_train_dataset()
+        self._train_dataset = self.generate_train_dataset()
+        self._test_dataset = self.generate_test_dataset()
 
     @property
     def train_dataset(self):
-        return self._image_dataset
-    
+        return self._train_dataset
+
+    @property
+    def test_dataset(self):
+        return self._test_dataset
+
 
 if __name__ == '__main__':
 
@@ -88,7 +128,8 @@ if __name__ == '__main__':
                    'image_height': 1080,
                    'image_width': 1920,
                    'channels': 3,
-                   'batch_size': 4
+                   'batch_size': 4,
+                   'train_test_split': 0.75
                    }
 
     dataset = MoonYardDataset(**test_config)
@@ -98,4 +139,10 @@ if __name__ == '__main__':
         assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['channels'])
         assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'])
         print("Train assertion success!")
+        break
+
+    for image, depth_map in dataset.test_dataset:
+        assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['channels'])
+        assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'])
+        print("Test assertion success!")
         break
