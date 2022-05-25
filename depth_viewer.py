@@ -18,7 +18,7 @@ def main():
     
     ret = 0
 
-    for root, dirs, files in os.walk(data_directory):
+    for _, dirs, _ in os.walk(data_directory):
         for directory in tqdm(dirs):
             tqdm.write("Reading data...")
 

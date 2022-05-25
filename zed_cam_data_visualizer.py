@@ -27,7 +27,7 @@ def main():
 
     horizon_files = tools.scan_horizon_files(horizon_directory)
 
-    for root, dirs, files in os.walk(data_directory):
+    for _, dirs, _ in os.walk(data_directory):
         for directory in tqdm(dirs):
             tqdm.write("Reading image...")
             image_file = os.path.join(data_directory, directory, f'zed_image_left_{directory}.jpg')
@@ -85,7 +85,7 @@ def create_video():
                                    fps=5, 
                                    frameSize=(1920, 540))
 
-    for root, dirs, files in os.walk(data_directory):
+    for _, dirs, _ in os.walk(data_directory):
         for directory in tqdm(dirs):
             image_file = os.path.join(data_directory, directory, f'side_by_side_view_{directory}.jpg')
 

@@ -1,13 +1,6 @@
 import os
-import sys
-
 import tensorflow as tf
-from tensorflow.keras import layers
-
 import pandas as pd
-import numpy as np
-import cv2
-import matplotlib.pyplot as plt
 
 from utils import visualizer
 from datasets.diode import DataGenerator
@@ -23,7 +16,7 @@ def main():
         print("Downloading dataset...")
         os.makedirs(annotation_folder)
 
-        annotation_zip = tf.keras.utils.get_file(
+        tf.keras.utils.get_file(
             os.path.join(annotation_folder, "val.tar.gz"),
             cache_subdir=os.path.abspath("."),
             origin="http://diode-dataset.s3.amazonaws.com/val.tar.gz",
@@ -34,7 +27,7 @@ def main():
 
     filelist = []
 
-    for root, dirs, files in os.walk(path):
+    for root, _, files in os.walk(path):
         for file in files:
             filelist.append(os.path.join(root, file))
 
