@@ -7,6 +7,7 @@ import tensorflow as tf
 from tqdm import tqdm
 from sklearn.utils import shuffle
 from .base_dataset import BaseDataset
+from utils import tools, view_depth
 
 
 class MoonYardDataset(BaseDataset):
@@ -69,6 +70,8 @@ class MoonYardDataset(BaseDataset):
             mask = cv2.imread(mask_file)
             depth = np.load(depth_file_path)
 
+            depth = self.mask_depth_map(depth, mask)
+
             yield image, depth
 
     def test_generator(self):
@@ -83,6 +86,8 @@ class MoonYardDataset(BaseDataset):
             image = cv2.imread(image_path)
             mask = cv2.imread(mask_file)
             depth = np.load(depth_file_path)
+
+            depth = self.mask_depth_map(depth, mask)
 
             yield image, depth
 
@@ -102,6 +107,17 @@ class MoonYardDataset(BaseDataset):
         return tf.data.Dataset.from_generator(self.train_generator,
                                               output_types=(tf.float32, tf.float32)
                                               ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
+
+    def mask_depth_map(self, _depth_map, _mask):
+        mask = cv2.resize(_mask, (self.image_width, self.image_height))
+        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+
+        mask = mask > 0
+        
+        depth_map = np.nan_to_num(_depth_map)
+        depth_map = np.where(mask, depth_map, 0)
+
+        return depth_map
 
     def generate_test_dataset(self):
         return tf.data.Dataset.from_generator(self.train_generator,
@@ -130,14 +146,20 @@ if __name__ == '__main__':
                    'channels': 3,
                    'batch_size': 4,
                    'train_test_split': 0.75
-                   }
+                   } 
 
     dataset = MoonYardDataset(**test_config)
     dataset.prepare()
 
     for image, depth_map in dataset.train_dataset:
-        assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['channels'])
-        assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'])
+        # assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['channels'])
+        # assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'])
+
+        depth_map_ = depth_map[0].numpy()
+        depth_map_ = 255 * (depth_map_ - np.min(depth_map_)) / (np.max(depth_map_) - np.min(depth_map_))
+
+        tools.show_image(image[0].numpy().astype(np.uint8), cv2.cvtColor(depth_map_.astype(np.uint8), cv2.COLOR_GRAY2RGB))
+
         print("Train assertion success!")
         break
 

@@ -5,8 +5,8 @@ from tqdm import tqdm
 from utils import tools
 
 image = None
-depth_map = None
-depth_from_point_cloud = None
+depth_map = np.zeros((1080, 1920))
+depth_from_point_cloud = np.zeros((1080, 1920))
 depth_loaded = False
 depth_position = (10, 10)
 depth_estimate_position = (10, 20)
@@ -50,8 +50,12 @@ def display_depth(_image, depth_map_file, point_cloud_file):
             return -1
 
         elif key == ord('r'):
-            depth_map = np.load(depth_map_file)
-            point_cloud = np.load(point_cloud_file)
+            if type(depth_map_file) == str:
+                depth_map = np.load(depth_map_file)
+                point_cloud = np.load(point_cloud_file)
+            else:
+                depth_map = depth_map_file
+                point_cloud = point_cloud_file
             
             tqdm.write("Calculating depth from point cloud...") 
             depth_from_point_cloud = tools.generate_depth_map(point_cloud)

@@ -69,7 +69,7 @@ def scan_horizon_files(directory: str):
 
     horizons = []
 
-    for root, dirs, files in os.walk(directory):
+    for _, _, files in os.walk(directory):
         horizons = [f.split('.')[0].split('_')[1] for f in files]
 
     return horizons
