@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import cv2
 
+
 class DataGenerator(tf.keras.utils.Sequence):
     def __init__(self, data, batch_size=6, dim=(768, 1024), n_channels=3, shuffle=True):
         """
@@ -24,7 +25,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             self.batch_size = len(self.indices) - index * self.batch_size
         # Generate one batch of data
         # Generate indices of the batch
-        index = self.indices[index * self.batch_size : (index + 1) * self.batch_size]
+        index = self.indices[index * self.batch_size: (index + 1) * self.batch_size]
         # Find list of IDs
         batch = [self.indices[k] for k in index]
         x, y = self.data_generation(batch)
@@ -37,7 +38,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         Updates indexes after each epoch
         """
         self.index = np.arange(len(self.indices))
-        if self.shuffle == True:
+        if self.shuffle:
             np.random.shuffle(self.index)
 
     def load(self, image_path, depth_map, mask):
@@ -72,7 +73,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         y = np.empty((self.batch_size, *self.dim, 1))
 
         for i, batch_id in enumerate(batch):
-            x[i,], y[i,] = self.load(
+            x[i, ], y[i, ] = self.load(
                 self.data["image"][batch_id],
                 self.data["depth"][batch_id],
                 self.data["mask"][batch_id],
