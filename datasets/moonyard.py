@@ -7,7 +7,7 @@ import tensorflow as tf
 from tqdm import tqdm
 from sklearn.utils import shuffle
 from .base_dataset import BaseDataset
-from utils import tools, view_depth
+from utils import tools
 
 
 class MoonYardDataset(BaseDataset):
@@ -152,8 +152,8 @@ if __name__ == '__main__':
     dataset.prepare()
 
     for image, depth_map in dataset.train_dataset:
-        # assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['channels'])
-        # assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'])
+        assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['channels'])
+        assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'])
 
         depth_map_ = depth_map[0].numpy()
         depth_map_ = 255 * (depth_map_ - np.min(depth_map_)) / (np.max(depth_map_) - np.min(depth_map_))
