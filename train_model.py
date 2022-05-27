@@ -1,59 +1,35 @@
-import os
 import tensorflow as tf
-import pandas as pd
+from utils import tools
 
-from utils import visualizer
-from datasets.diode import DataGenerator
+from datasets.moonyard import MoonYardDataset
 from models.unet import DepthEstimationModel
+
 tf.random.set_seed(123)
 
 
 def main():
-    annotation_folder = "./data"
+    tf.keras.backend.clear_session()
+    
+    default_config = './config/training_config.yaml'
 
-    if not os.path.exists(annotation_folder):
+    config = tools.load_config(default_config)
 
-        print("Downloading dataset...")
-        os.makedirs(annotation_folder)
+    dataset_parameters = config['dataset_parameters']
+    experiment_parameters = config['experiment_parameters']
 
-        tf.keras.utils.get_file(
-            os.path.join(annotation_folder, "val.tar.gz"),
-            cache_subdir=os.path.abspath("."),
-            origin="http://diode-dataset.s3.amazonaws.com/val.tar.gz",
-            extract=True,
-        )
+    learning_rate = experiment_parameters['learning_rate']
+    epochs = experiment_parameters['epochs']
 
-    path = "./data/val/indoors"
+    image_width = dataset_parameters['image_width']
+    image_height = dataset_parameters['image_height']
 
-    filelist = []
+    dataset = MoonYardDataset(**dataset_parameters)
+    dataset.prepare()
 
-    for root, _, files in os.walk(path):
-        for file in files:
-            filelist.append(os.path.join(root, file))
-
-    filelist.sort()
-    data = {
-        "image": [x for x in filelist if x.endswith(".png")],
-        "depth": [x for x in filelist if x.endswith("_depth.npy")],
-        "mask": [x for x in filelist if x.endswith("_depth_mask.npy")],
-    }
-    df = pd.DataFrame(data)
-
-    df = df.sample(frac=1, random_state=42)
-
-    HEIGHT = 256
-    WIDTH = 256
-    LR = 0.0002
-    EPOCHS = 30
-    BATCH_SIZE = 32
-
-    visualize_samples = next(iter(DataGenerator(data=df, batch_size=6, dim=(HEIGHT, WIDTH))))
-
-    visualizer.visualize_depth_map(visualize_samples)
-
-    optimizer = tf.keras.optimizers.Adam(learning_rate=LR,
+    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate,
                                          amsgrad=False)
-    model = DepthEstimationModel(width=WIDTH, height=HEIGHT)
+
+    model = DepthEstimationModel(width=image_width, height=image_height)
 
     # Define the loss function
     cross_entropy = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction="none")
@@ -61,29 +37,11 @@ def main():
     # Compile the model
     model.compile(optimizer, loss=cross_entropy)
 
-    train_loader = DataGenerator(data=df[:260].reset_index(drop="true"), 
-                                 batch_size=BATCH_SIZE, 
-                                 dim=(HEIGHT, WIDTH))
+    model.build(input_shape=dataset.train_dataset.element_spec[0].shape)
 
-    validation_loader = DataGenerator(data=df[260:].reset_index(drop="true"), 
-                                      batch_size=BATCH_SIZE, 
-                                      dim=(HEIGHT, WIDTH))
-
-    model.fit(train_loader,
-              epochs=EPOCHS,
-              validation_data=validation_loader)
-
-    test_loader = next(iter(DataGenerator(data=df[265:].reset_index(drop="true"), 
-                                          batch_size=6, 
-                                          dim=(HEIGHT, WIDTH))))
-
-    visualizer.visualize_depth_map(test_loader, test=True, model=model)
-
-    test_loader = next(iter(DataGenerator(data=df[300:].reset_index(drop="true"), 
-                                          batch_size=6, 
-                                          dim=(HEIGHT, WIDTH))))
-
-    visualizer.visualize_depth_map(test_loader, test=True, model=model)
+    model.fit(dataset.train_dataset,
+              epochs=epochs,
+              validation_data=dataset.test_dataset)
 
 
 if __name__ == '__main__':

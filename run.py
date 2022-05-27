@@ -9,21 +9,21 @@ tf.random.set_seed(123)
 
 
 def main():
-    annotation_folder = "./data"
+    annotation_folder = "./diode"
 
     if not os.path.exists(annotation_folder):
 
         print("Downloading dataset...")
         os.makedirs(annotation_folder)
 
-        tf.keras.utils.get_file(
+        _ = tf.keras.utils.get_file(
             os.path.join(annotation_folder, "val.tar.gz"),
             cache_subdir=os.path.abspath("."),
             origin="http://diode-dataset.s3.amazonaws.com/val.tar.gz",
             extract=True,
         )
 
-    path = "./data/val/indoors"
+    path = "./diode/val/indoors"
 
     filelist = []
 

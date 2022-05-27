@@ -92,7 +92,14 @@ class MoonYardDataset(BaseDataset):
             yield image, depth
 
     def generate_train_dataset(self):
+        """
+        output_tpyes and output_shapes will be deprecated in a future version but pyright thinks
+        TensorSpec does not accept arguments.
 
+        Use output_signature in the future
+        
+        """
+        
         # return tf.data.Dataset.from_generator(self.train_generator,
         #                                       output_signature=(tf.TensorSpec(shape=(self.image_height, 
         #                                                                              self.image_width,
@@ -105,7 +112,21 @@ class MoonYardDataset(BaseDataset):
         #                                       ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
 
         return tf.data.Dataset.from_generator(self.train_generator,
-                                              output_types=(tf.float32, tf.float32)
+                                              output_types=(tf.float32, tf.float32),
+                                              output_shapes=((self.image_height, self.image_width, self.channels), 
+                                                             (self.image_height, self.image_width, 1))
+                                              ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
+
+    def generate_test_dataset(self):
+        """
+        output_tpyes and output_shapes will be deprecated in a future version but pyright thinks
+        TensorSpec does not accept arguments.
+        
+        """
+        return tf.data.Dataset.from_generator(self.train_generator,
+                                              output_types=(tf.float32, tf.float32),
+                                              output_shapes=((self.image_height, self.image_width, self.channels), 
+                                                             (self.image_height, self.image_width, 1))
                                               ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
 
     def mask_depth_map(self, _depth_map, _mask):
@@ -119,11 +140,6 @@ class MoonYardDataset(BaseDataset):
 
         return depth_map
 
-    def generate_test_dataset(self):
-        return tf.data.Dataset.from_generator(self.train_generator,
-                                              output_types=(tf.float32, tf.float32)
-                                              ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
-
     def prepare(self):
         self._train_dataset = self.generate_train_dataset()
         self._test_dataset = self.generate_test_dataset()
@@ -135,6 +151,10 @@ class MoonYardDataset(BaseDataset):
     @property
     def test_dataset(self):
         return self._test_dataset
+
+    @property
+    def channels(self):
+        return self._channels
 
 
 if __name__ == '__main__':
