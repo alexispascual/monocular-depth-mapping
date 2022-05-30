@@ -4,7 +4,8 @@ dataset_parameters:
   masks_folder: './data/horizons'
   image_height: 768
   image_width: 1024
-  channels: 3
+  image_channels: 3
+  depth_channels: 1
   batch_size: 4
   train_test_split: 0.75
 

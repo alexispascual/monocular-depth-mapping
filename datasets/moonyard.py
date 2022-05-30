@@ -20,7 +20,8 @@ class MoonYardDataset(BaseDataset):
                  masks_folder: str,
                  image_height: int,
                  image_width: int,
-                 channels: int,
+                 image_channels: int,
+                 depth_channels: int,
                  batch_size: int,
                  train_test_split: float
                  ):
@@ -30,8 +31,9 @@ class MoonYardDataset(BaseDataset):
         self.masks_folder = masks_folder
         self.image_height = image_height
         self.image_width = image_width
+        self.depth_channels = depth_channels
 
-        self._channels = channels
+        self._image_channels = image_channels
         self._batch_size = batch_size
 
         # self.image_file_paths = []
@@ -109,7 +111,7 @@ class MoonYardDataset(BaseDataset):
         # return tf.data.Dataset.from_generator(self.train_generator,
         #                                       output_signature=(tf.TensorSpec(shape=(self.image_height, 
         #                                                                              self.image_width,
-        #                                                                              self._channels),
+        #                                                                              self._image_channels),
         #                                                                       dtype=tf.float32),
         #                                                         tf.TensorSpec(shape=(self.image_height, 
         #                                                                              self.image_width,
@@ -119,8 +121,8 @@ class MoonYardDataset(BaseDataset):
 
         return tf.data.Dataset.from_generator(self.train_generator,
                                               output_types=(tf.float32, tf.float32),
-                                              output_shapes=((self.image_height, self.image_width, self.channels), 
-                                                             (self.image_height, self.image_width, 1))
+                                              output_shapes=((self.image_height, self.image_width, self.image_channels), 
+                                                             (self.image_height, self.image_width, self.depth_channels))
                                               ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
 
     def generate_test_dataset(self):
@@ -131,14 +133,15 @@ class MoonYardDataset(BaseDataset):
         """
         return tf.data.Dataset.from_generator(self.train_generator,
                                               output_types=(tf.float32, tf.float32),
-                                              output_shapes=((self.image_height, self.image_width, self.channels), 
-                                                             (self.image_height, self.image_width, 1))
+                                              output_shapes=((self.image_height, self.image_width, self.image_channels), 
+                                                             (self.image_height, self.image_width, self.depth_channels))
                                               ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
 
     def mask_depth_map(self, _depth_map, _mask):
         mask = cv2.resize(_mask, (self.image_width, self.image_height))
         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         mask = np.expand_dims(mask, axis=2)
+
         mask = mask > 0
         
         depth_map = np.nan_to_num(_depth_map)
@@ -170,8 +173,8 @@ class MoonYardDataset(BaseDataset):
         return self._test_dataset
 
     @property
-    def channels(self):
-        return self._channels
+    def image_channels(self):
+        return self._image_channels
 
 
 if __name__ == '__main__':
@@ -180,7 +183,8 @@ if __name__ == '__main__':
                    'masks_folder': './data/horizons',
                    'image_height': 1080,
                    'image_width': 1920,
-                   'channels': 3,
+                   'image_channels': 3,
+                   'depth_channels': 1,
                    'batch_size': 4,
                    'train_test_split': 0.75
                    } 
@@ -189,8 +193,8 @@ if __name__ == '__main__':
     dataset.prepare()
 
     for image, depth_map in dataset.train_dataset:
-        assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['channels'])
-        assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'])
+        assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['image_channels'])
+        assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['depth_channels'])
 
         depth_map_ = depth_map[0].numpy()
         depth_map_ = 255 * (depth_map_ - np.min(depth_map_)) / (np.max(depth_map_) - np.min(depth_map_))
@@ -201,7 +205,7 @@ if __name__ == '__main__':
         break
 
     for image, depth_map in dataset.test_dataset:
-        assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['channels'])
-        assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'])
+        assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['image_channels'])
+        assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['depth_channels'])
         print("Test assertion success!")
         break
