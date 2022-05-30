@@ -36,6 +36,8 @@ class MoonYardDataset(BaseDataset):
         self._image_channels = image_channels
         self._batch_size = batch_size
 
+        self.min_depth = 0.2
+        self.max_depth = 20
         # self.image_file_paths = []
         # self.mask_file_paths = []
         # self.depth_file_paths = []
@@ -73,8 +75,6 @@ class MoonYardDataset(BaseDataset):
             depth = np.load(depth_file_path)
 
             image = self.image_transforms(image)
-            depth = self.depth_transforms(depth)
-
             depth = self.mask_depth_map(depth, mask)
 
             yield image, depth
@@ -93,8 +93,6 @@ class MoonYardDataset(BaseDataset):
             depth = np.load(depth_file_path)
 
             image = self.image_transforms(image)
-            depth = self.depth_transforms(depth)
-
             depth = self.mask_depth_map(depth, mask)
 
             yield image, depth
@@ -138,14 +136,22 @@ class MoonYardDataset(BaseDataset):
                                               ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
 
     def mask_depth_map(self, _depth_map, _mask):
-        mask = cv2.resize(_mask, (self.image_width, self.image_height))
+        mask = cv2.resize(_mask, (_depth_map.shape[1], _depth_map.shape[0]))
         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        mask = np.expand_dims(mask, axis=2)
 
-        mask = mask > 0
+        mask = mask == 255
         
         depth_map = np.nan_to_num(_depth_map)
-        depth_map = np.where(mask, depth_map, 0)
+        depth_map = np.where(mask, depth_map, self.max_depth)
+        depth_map = np.clip(depth_map, self.min_depth, self.max_depth)
+        depth_map = np.log(depth_map, where=mask)
+
+        depth_map = np.ma.masked_where(~mask, depth_map)
+
+        depth_map = np.clip(depth_map, 0.1, np.log(self.max_depth))
+        depth_map = cv2.resize(depth_map, (self.image_width, self.image_height))
+
+        depth_map = np.expand_dims(depth_map, axis=2)
 
         return depth_map
 
@@ -155,14 +161,9 @@ class MoonYardDataset(BaseDataset):
 
     def image_transforms(self, image):
         image = tf.image.resize(image, (self.image_height, self.image_width))
+        image = tf.image.convert_image_dtype(image, tf.float32)
         
         return image
-
-    def depth_transforms(self, depth):
-        depth = np.resize(depth, (self.image_height, self.image_width))
-        depth = np.expand_dims(depth, axis=2)
-
-        return depth
 
     @property
     def train_dataset(self):

@@ -47,9 +47,9 @@ def main():
     EPOCHS = 30
     BATCH_SIZE = 32
 
-    visualize_samples = next(iter(DataGenerator(data=df, batch_size=6, dim=(HEIGHT, WIDTH))))
+    # visualize_samples = next(iter(DataGenerator(data=df, batch_size=6, dim=(HEIGHT, WIDTH))))
 
-    visualizer.visualize_depth_map(visualize_samples)
+    # visualizer.visualize_depth_map(visualize_samples)
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=LR,
                                          amsgrad=False)
@@ -64,6 +64,10 @@ def main():
     train_loader = DataGenerator(data=df[:260].reset_index(drop="true"), 
                                  batch_size=BATCH_SIZE, 
                                  dim=(HEIGHT, WIDTH))
+
+    for x, y in train_loader:
+        print(f"{y}")
+        exit(1)
 
     validation_loader = DataGenerator(data=df[260:].reset_index(drop="true"), 
                                       batch_size=BATCH_SIZE, 
