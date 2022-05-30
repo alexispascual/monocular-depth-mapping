@@ -37,8 +37,6 @@ def main():
     # Compile the model
     model.compile(optimizer, loss=cross_entropy)
 
-    # model.build(input_shape=dataset.train_dataset.element_spec[0].shape)
-
     model.fit(dataset.train_dataset,
               epochs=epochs,
               validation_data=dataset.test_dataset)
