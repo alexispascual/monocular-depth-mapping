@@ -70,6 +70,9 @@ class MoonYardDataset(BaseDataset):
             mask = cv2.imread(mask_file)
             depth = np.load(depth_file_path)
 
+            image = self.image_transforms(image)
+            depth = self.depth_transforms(depth)
+
             depth = self.mask_depth_map(depth, mask)
 
             yield image, depth
@@ -86,6 +89,9 @@ class MoonYardDataset(BaseDataset):
             image = cv2.imread(image_path)
             mask = cv2.imread(mask_file)
             depth = np.load(depth_file_path)
+
+            image = self.image_transforms(image)
+            depth = self.depth_transforms(depth)
 
             depth = self.mask_depth_map(depth, mask)
 
@@ -132,7 +138,7 @@ class MoonYardDataset(BaseDataset):
     def mask_depth_map(self, _depth_map, _mask):
         mask = cv2.resize(_mask, (self.image_width, self.image_height))
         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-
+        mask = np.expand_dims(mask, axis=2)
         mask = mask > 0
         
         depth_map = np.nan_to_num(_depth_map)
@@ -143,6 +149,17 @@ class MoonYardDataset(BaseDataset):
     def prepare(self):
         self._train_dataset = self.generate_train_dataset()
         self._test_dataset = self.generate_test_dataset()
+
+    def image_transforms(self, image):
+        image = tf.image.resize(image, (self.image_height, self.image_width))
+        
+        return image
+
+    def depth_transforms(self, depth):
+        depth = np.resize(depth, (self.image_height, self.image_width))
+        depth = np.expand_dims(depth, axis=2)
+
+        return depth
 
     @property
     def train_dataset(self):

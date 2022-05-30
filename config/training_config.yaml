@@ -2,8 +2,8 @@
 dataset_parameters:
   root_folder: './data/moon_yard'
   masks_folder: './data/horizons'
-  image_height: 1080
-  image_width: 1920
+  image_height: 768
+  image_width: 1024
   channels: 3
   batch_size: 4
   train_test_split: 0.75
