@@ -4,13 +4,14 @@ import cv2
 
 
 class DataGenerator(tf.keras.utils.Sequence):
-    def __init__(self, data, batch_size=6, dim=(768, 1024), n_channels=3, shuffle=True):
+    def __init__(self, data, batch_size=6, image_height=768, image_width=1024, n_channels=3, shuffle=True):
         """
         Initialization
         """
         self.data = data
         self.indices = self.data.index.tolist()
-        self.dim = dim
+        self.image_height = image_height
+        self.image_width = image_width
         self.n_channels = n_channels
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -46,7 +47,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         image_ = cv2.imread(image_path)
         image_ = cv2.cvtColor(image_, cv2.COLOR_BGR2RGB)
-        image_ = cv2.resize(image_, self.dim)
+        image_ = cv2.resize(image_, (self.image_width, self.image_height))
         image_ = tf.image.convert_image_dtype(image_, tf.float32)
 
         depth_map = np.load(depth_map).squeeze()
@@ -61,7 +62,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         depth_map = np.ma.masked_where(~mask, depth_map)
 
         depth_map = np.clip(depth_map, 0.1, np.log(max_depth))
-        depth_map = cv2.resize(depth_map, self.dim)
+        depth_map = cv2.resize(depth_map, (self.image_width, self.image_height))
         depth_map = np.expand_dims(depth_map, axis=2)
         depth_map = tf.image.convert_image_dtype(depth_map, tf.float32)
 
@@ -69,8 +70,8 @@ class DataGenerator(tf.keras.utils.Sequence):
 
     def data_generation(self, batch):
 
-        x = np.empty((self.batch_size, *self.dim, self.n_channels))
-        y = np.empty((self.batch_size, *self.dim, 1))
+        x = np.empty((self.batch_size, self.image_height, self.image_width, self.n_channels))
+        y = np.empty((self.batch_size, self.image_height, self.image_width, 1))
 
         for i, batch_id in enumerate(batch):
             x[i, ], y[i, ] = self.load(
