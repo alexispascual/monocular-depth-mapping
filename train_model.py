@@ -41,6 +41,8 @@ def main():
               epochs=epochs,
               validation_data=dataset.test_dataset)
 
+    model.save(experiment_parameters['saved_model_dir'])
+
 
 if __name__ == '__main__':
     main()
