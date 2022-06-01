@@ -6,7 +6,7 @@ dataset_parameters:
   image_width: 1024
   image_channels: 3
   depth_channels: 1
-  batch_size: 8
+  batch_size: 4
   train_test_split: 0.75
 
 experiment_parameters:
@@ -14,4 +14,5 @@ experiment_parameters:
   epochs: 30
   saved_model_dir: './saved_models/depth_estimation_model'
   pretrain: True
+  pre_trained_saved_model_dir: './saved_models/diode_depth_estimation_model'
 ...
