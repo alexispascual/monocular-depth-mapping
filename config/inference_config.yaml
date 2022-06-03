@@ -7,4 +7,7 @@ directories:
 image_parameters:
   image_height: 768
   image_width: 1024
+experiment_parameters:
+  show_depth_map_gui: True
+  visualize_normalized_depth: True
 ...

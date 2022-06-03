@@ -53,12 +53,13 @@ def display_depth(_image, depth_map_file, point_cloud_file):
             if type(depth_map_file) == str:
                 depth_map = np.load(depth_map_file)
                 point_cloud = np.load(point_cloud_file)
+
+                tqdm.write("Calculating depth from point cloud...") 
+                depth_from_point_cloud = tools.generate_depth_map(point_cloud)
+
             else:
                 depth_map = depth_map_file
                 point_cloud = point_cloud_file
-            
-            tqdm.write("Calculating depth from point cloud...") 
-            depth_from_point_cloud = tools.generate_depth_map(point_cloud)
 
             clear_image_text()
             write_image_text("Done!", depth_position)
