@@ -46,6 +46,8 @@ def main():
                                   epochs=epochs,
                                   batch_size=batch_size)
 
+        model.save(experiment_parameters['pre_trained_saved_model_dir'])
+
     dataset = MoonYardDataset(**dataset_parameters)
     dataset.prepare()
 

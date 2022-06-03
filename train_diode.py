@@ -56,14 +56,6 @@ def pretrain_on_diode(model: tf.keras.Model,
                                       image_height=image_height,
                                       image_width=image_width)
 
-    # train_loader = DataGenerator(data=df[:260].reset_index(drop="true"), 
-    #                              batch_size=batch_size, 
-    #                              dim=(image_height, image_width))
-
-    # validation_loader = DataGenerator(data=df[260:].reset_index(drop="true"), 
-    #                                   batch_size=batch_size, 
-    #                                   dim=(image_height, image_width))
-
     model.fit(train_loader,
               epochs=epochs,
               validation_data=validation_loader)
