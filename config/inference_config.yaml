@@ -1,0 +1,6 @@
+---
+directories:
+  model_directory: './saved_models/depth_estimation_model'
+  data_directory: './data/moon_yard'
+  horizon_directory: './data/horizons'
+...

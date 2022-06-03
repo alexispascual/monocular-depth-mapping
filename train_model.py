@@ -57,6 +57,8 @@ def main():
 
     model.save(experiment_parameters['saved_model_dir'])
 
+    return experiment_parameters['saved_model_dir']
 
+    
 if __name__ == '__main__':
     main()
