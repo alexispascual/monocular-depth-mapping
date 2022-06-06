@@ -7,7 +7,7 @@ import tensorflow as tf
 from tqdm import tqdm
 from sklearn.utils import shuffle
 from .base_dataset import BaseDataset
-from utils import tools
+from utils import tools, view_depth
 
 
 class MoonYardDataset(BaseDataset):
@@ -140,13 +140,15 @@ class MoonYardDataset(BaseDataset):
         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
 
         mask = mask == 255
-        
+
+        invalid_mask = np.isnan(_depth_map)
+
         depth_map = np.nan_to_num(_depth_map)
         depth_map = np.where(mask, depth_map, self.max_depth)
         depth_map = np.clip(depth_map, self.min_depth, self.max_depth)
-        depth_map = np.log(depth_map, where=mask)
+        depth_map = np.log(depth_map, where=~invalid_mask)
 
-        depth_map = np.ma.masked_where(~mask, depth_map)
+        depth_map = np.ma.masked_where(invalid_mask, depth_map)
 
         depth_map = np.clip(depth_map, 0.1, np.log(self.max_depth))
         depth_map = cv2.resize(depth_map, (self.image_width, self.image_height))
@@ -182,8 +184,8 @@ if __name__ == '__main__':
 
     test_config = {'root_folder': './data/moon_yard',
                    'masks_folder': './data/horizons',
-                   'image_height': 1080,
-                   'image_width': 1920,
+                   'image_height': 768,
+                   'image_width': 1024,
                    'image_channels': 3,
                    'depth_channels': 1,
                    'batch_size': 4,
@@ -198,9 +200,10 @@ if __name__ == '__main__':
         assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['depth_channels'])
 
         depth_map_ = depth_map[0].numpy()
-        depth_map_ = 255 * (depth_map_ - np.min(depth_map_)) / (np.max(depth_map_) - np.min(depth_map_))
+        normalized_depth_map = 255 * (depth_map_ - np.min(depth_map_)) / (np.max(depth_map_) - np.min(depth_map_))
 
-        tools.show_image(image[0].numpy().astype(np.uint8), cv2.cvtColor(depth_map_.astype(np.uint8), cv2.COLOR_GRAY2RGB))
+        tools.show_image(image[0].numpy().astype(np.uint8), cv2.cvtColor(normalized_depth_map.astype(np.uint8), cv2.COLOR_GRAY2RGB))
+        view_depth.display_depth(image[0].numpy().astype(np.uint8), np.squeeze(depth_map_), np.squeeze(depth_map_))
 
         print("Train assertion success!")
         break
