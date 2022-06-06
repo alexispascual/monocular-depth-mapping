@@ -1,3 +1,5 @@
+import os
+
 import tensorflow as tf
 from utils import tools
 
@@ -40,13 +42,18 @@ def main():
     model.compile(optimizer, loss=cross_entropy)
 
     if pretrain:
-        model = pretrain_on_diode(model=model,
-                                  image_height=image_height,
-                                  image_width=image_width, 
-                                  epochs=epochs,
-                                  batch_size=batch_size)
+        if not os.path.isdir(experiment_parameters['pre_trained_saved_model_dir']):
+            print("Pre-training model on diode dataset...")
+            model = pretrain_on_diode(model=model,
+                                      image_height=image_height,
+                                      image_width=image_width, 
+                                      epochs=epochs,
+                                      batch_size=batch_size)
 
-        model.save(experiment_parameters['pre_trained_saved_model_dir'])
+            model.save(experiment_parameters['pre_trained_saved_model_dir'])
+        else:
+            print("Fetching model pretrained on diode dataset...")
+            model = tf.keras.models.load_model(experiment_parameters['pre_trained_saved_model_dir']) 
 
     dataset = MoonYardDataset(**dataset_parameters)
     dataset.prepare()
