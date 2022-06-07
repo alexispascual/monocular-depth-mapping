@@ -74,7 +74,7 @@ class MoonYardDataset(BaseDataset):
             mask = cv2.imread(mask_file)
             depth = np.load(depth_file_path)
 
-            image = self.image_transforms(image)
+            image = self.image_transforms(image, mask)
             depth = self.mask_depth_map(depth, mask)
 
             yield image, depth
@@ -92,7 +92,7 @@ class MoonYardDataset(BaseDataset):
             mask = cv2.imread(mask_file)
             depth = np.load(depth_file_path)
 
-            image = self.image_transforms(image)
+            image = self.image_transforms(image, mask)
             depth = self.mask_depth_map(depth, mask)
 
             yield image, depth
@@ -161,10 +161,17 @@ class MoonYardDataset(BaseDataset):
         self._train_dataset = self.generate_train_dataset()
         self._test_dataset = self.generate_test_dataset()
 
-    def image_transforms(self, image):
+    def image_transforms(self, image, mask):
+        mask = cv2.resize(mask, (image.shape[1], image.shape[0]))
+        # mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+
+        mask = mask == 255
+
+        image = np.where(mask, image, (0, 0, 0))
+
         image = tf.image.resize(image, (self.image_height, self.image_width))
         image = tf.image.convert_image_dtype(image, tf.float32)
-        
+
         return image
 
     @property
@@ -199,7 +206,7 @@ if __name__ == '__main__':
         assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['image_channels'])
         assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['depth_channels'])
 
-        depth_map_ = depth_map[0].numpy()
+        depth_map_ = np.exp(depth_map[0].numpy())
         normalized_depth_map = 255 * (depth_map_ - np.min(depth_map_)) / (np.max(depth_map_) - np.min(depth_map_))
 
         tools.show_image(image[0].numpy().astype(np.uint8), cv2.cvtColor(normalized_depth_map.astype(np.uint8), cv2.COLOR_GRAY2RGB))
