@@ -38,10 +38,7 @@ class MoonYardDataset(BaseDataset):
 
         self.min_depth = 0.2
         self.max_depth = 20
-        # self.image_file_paths = []
-        # self.mask_file_paths = []
-        # self.depth_file_paths = []
-        # self.point_cloud_file_paths = []
+
         self.folder_names = []
 
         tqdm.write("Generating file list...")
@@ -163,7 +160,6 @@ class MoonYardDataset(BaseDataset):
 
     def image_transforms(self, image, mask):
         mask = cv2.resize(mask, (image.shape[1], image.shape[0]))
-        # mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
 
         mask = mask == 255
 
