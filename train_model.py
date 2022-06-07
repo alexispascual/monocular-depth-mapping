@@ -22,6 +22,7 @@ def main():
 
     learning_rate = experiment_parameters['learning_rate']
     epochs = experiment_parameters['epochs']
+    pre_train_epochs = experiment_parameters['pre_train_epochs']
     pretrain = experiment_parameters['pretrain']
 
     image_width = dataset_parameters['image_width']
@@ -47,7 +48,7 @@ def main():
             model = pretrain_on_diode(model=model,
                                       image_height=image_height,
                                       image_width=image_width, 
-                                      epochs=epochs,
+                                      epochs=pre_train_epochs,
                                       batch_size=batch_size)
 
             model.save(experiment_parameters['pre_trained_saved_model_dir'])

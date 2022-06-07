@@ -46,7 +46,8 @@ class DataGenerator(tf.keras.utils.Sequence):
         """Load input and target image."""
 
         image_ = cv2.imread(image_path)
-        image_ = cv2.cvtColor(image_, cv2.COLOR_BGR2RGB)
+        image_ = cv2.cvtColor(image_, cv2.COLOR_BGR2GRAY)
+        image_ = cv2.cvtColor(image_, cv2.COLOR_GRAY2BGR)
         image_ = cv2.resize(image_, (self.image_width, self.image_height))
         image_ = tf.image.convert_image_dtype(image_, tf.float32)
 

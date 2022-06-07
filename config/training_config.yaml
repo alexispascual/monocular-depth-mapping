@@ -11,8 +11,9 @@ dataset_parameters:
 
 experiment_parameters:
   learning_rate: 0.00001
-  epochs: 50
+  epochs: 10
   saved_model_dir: './saved_models/depth_estimation_model'
   pretrain: True
   pre_trained_saved_model_dir: './saved_models/diode_depth_estimation_model'
+  pre_train_epochs: 50
 ...
