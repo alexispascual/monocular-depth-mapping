@@ -1,3 +1,4 @@
+from typing import Union
 import cv2
 import numpy as np
 
@@ -6,7 +7,7 @@ from utils import tools
 
 image = None
 depth_map = np.zeros((1080, 1920))
-depth_from_point_cloud = np.zeros((1080, 1920))
+depth_map_2 = np.zeros((1080, 1920))
 depth_loaded = False
 depth_position = (10, 10)
 depth_estimate_position = (10, 20)
@@ -18,10 +19,10 @@ def write_depth(event, x, y, flags, param):
 
         if depth_loaded:
             depth = depth_map[y, x]
-            depth_estimate = depth_from_point_cloud[y, x]
+            depth_2 = depth_map_2[y, x]
 
             write_image_text(f"{depth = :.2f}", depth_position)
-            write_image_text(f"{depth_estimate = :.2f}", depth_estimate_position)
+            write_image_text(f"{depth_2 = :.2f}", depth_estimate_position)
         
         else:
             write_image_text("Load depth file!", depth_position)
@@ -31,8 +32,10 @@ def write_depth(event, x, y, flags, param):
         clear_image_text()
 
 
-def display_depth(_image, depth_map_file, point_cloud_file):
-    global image, depth_map, depth_from_point_cloud, depth_loaded
+def display_depth(_image, 
+                  _depth_map: Union[str, np.ndarray], 
+                  _depth_map_2: Union[str, np.ndarray]):
+    global image, depth_map, depth_map_2, depth_loaded
 
     image = _image
     depth_loaded = False
@@ -50,16 +53,16 @@ def display_depth(_image, depth_map_file, point_cloud_file):
             return -1
 
         elif key == ord('r'):
-            if type(depth_map_file) == str:
-                depth_map = np.load(depth_map_file)
-                point_cloud = np.load(point_cloud_file)
+            if type(_depth_map) == str:
+                depth_map = np.load(_depth_map)
+                point_cloud = np.load(_depth_map_2)
 
                 tqdm.write("Calculating depth from point cloud...") 
-                depth_from_point_cloud = tools.generate_depth_map(point_cloud)
+                depth_map_2 = tools.generate_depth_map(point_cloud)
 
             else:
-                depth_map = depth_map_file
-                point_cloud = point_cloud_file
+                depth_map = _depth_map
+                depth_map_2 = _depth_map_2
 
             clear_image_text()
             write_image_text("Done!", depth_position)

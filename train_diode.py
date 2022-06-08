@@ -28,7 +28,7 @@ def pretrain_on_diode(model: tf.keras.Model,
             extract=True,
         )
 
-    path = "./diode/val/indoors"
+    path = "./diode/val/outdoors"
 
     filelist = []
 
