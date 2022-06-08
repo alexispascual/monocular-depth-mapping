@@ -13,7 +13,7 @@ depth_position = (10, 10)
 depth_estimate_position = (10, 20)
 
 
-def write_depth(event, x, y, flags, param):
+def write_depth(event, x, y, flags, params):
 
     if event == cv2.EVENT_LBUTTONUP:
 
