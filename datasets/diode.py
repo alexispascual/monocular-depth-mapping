@@ -1,55 +1,82 @@
 import tensorflow as tf
 import numpy as np
 import cv2
+import os
+import math
+
+from .base_dataset import BaseDataset
+from utils import tools, view_depth
 
 
-class DataGenerator(tf.keras.utils.Sequence):
-    def __init__(self, data, batch_size=6, image_height=768, image_width=1024, n_channels=3, shuffle=True):
+class DiodeDataset(BaseDataset):
+    def __init__(self, 
+                 root_folder: str = './data/diode',
+                 dataset_folder: str = './data/diode/val/outdoors',
+                 image_height: int = 768, 
+                 image_width: int = 1024, 
+                 image_channels: int = 3,
+                 depth_channels: int = 1,
+                 batch_size: int = 6, 
+                 train_test_split: float = 0.75,
+                 shuffle: bool = True):
         """
         Initialization
         """
+
+        if not os.path.exists(root_folder):
+
+            print("Downloading dataset...")
+            os.makedirs(root_folder)
+
+            _ = tf.keras.utils.get_file(
+                os.path.join(root_folder, "val.tar.gz"),
+                cache_subdir=os.path.abspath("."),
+                origin="http://diode-dataset.s3.amazonaws.com/val.tar.gz",
+                extract=True)
+        else:
+            print(f"Diode dataset found in {root_folder}")
+
+        filelist = []
+
+        for root, _, files in os.walk(dataset_folder):
+            for file in files:
+                filelist.append(os.path.join(root, file))
+
+        filelist.sort()
+        data = {
+            "image": [x for x in filelist if x.endswith(".png")],
+            "depth": [x for x in filelist if x.endswith("_depth.npy")],
+            "mask": [x for x in filelist if x.endswith("_depth_mask.npy")],
+        }
+
         self.data = data
-        self.indices = self.data.index.tolist()
         self.image_height = image_height
         self.image_width = image_width
-        self.n_channels = n_channels
-        self.batch_size = batch_size
+        self.depth_channels = depth_channels
+
+        self._image_channels = image_channels
+        self._batch_size = batch_size
+
         self.shuffle = shuffle
         self.min_depth = 0.1
-        self.on_epoch_end()
 
-    def __len__(self):
-        return int(np.ceil(len(self.data) / self.batch_size))
+        num_files = len(self.data["image"])
+        indices = list(range(num_files))
+        print(f"{num_files} images found.")
 
-    def __getitem__(self, index):
-        if (index + 1) * self.batch_size > len(self.indices):
-            self.batch_size = len(self.indices) - index * self.batch_size
-        # Generate one batch of data
-        # Generate indices of the batch
-        index = self.indices[index * self.batch_size: (index + 1) * self.batch_size]
-        # Find list of IDs
-        batch = [self.indices[k] for k in index]
-        x, y = self.data_generation(batch)
+        if shuffle:
+            np.random.shuffle(indices)
 
-        return x, y
-
-    def on_epoch_end(self):
-
-        """
-        Updates indexes after each epoch
-        """
-        self.index = np.arange(len(self.indices))
-        if self.shuffle:
-            np.random.shuffle(self.index)
+        train_split = math.floor(train_test_split * num_files)
+        self.train_indices = indices[:train_split]
+        self.test_indices = indices[train_split:]
 
     def load(self, image_path, depth_map, mask):
         """Load input and target image."""
 
-        image_ = cv2.imread(image_path)
-        image_ = cv2.cvtColor(image_, cv2.COLOR_BGR2GRAY)
-        image_ = cv2.cvtColor(image_, cv2.COLOR_GRAY2BGR)
-        image_ = cv2.resize(image_, (self.image_width, self.image_height))
-        image_ = tf.image.convert_image_dtype(image_, tf.float32)
+        image = cv2.imread(image_path)
+        image = cv2.resize(image, (self.image_width, self.image_height))
+        image = tf.image.convert_image_dtype(image, tf.float32)
 
         depth_map = np.load(depth_map).squeeze()
 
@@ -67,11 +94,81 @@ class DataGenerator(tf.keras.utils.Sequence):
         depth_map = np.expand_dims(depth_map, axis=2)
         depth_map = tf.image.convert_image_dtype(depth_map, tf.float32)
 
-        return image_, depth_map
+        return image, depth_map
+
+    def train_generator(self):
+        for i in self.train_indices:
+            image, depth_map = self.load(self.data['image'][i],
+                                         self.data['depth'][i],
+                                         self.data['mask'][i])
+
+            yield image, depth_map
+
+    def test_generator(self):
+        for i in self.test_indices:
+            image, depth_map = self.load(self.data['image'][i],
+                                         self.data['depth'][i],
+                                         self.data['mask'][i])
+
+            yield image, depth_map
+
+    def generate_train_dataset(self):
+        """
+        output_tpyes and output_shapes will be deprecated in a future version but pyright thinks
+        TensorSpec does not accept arguments.
+
+        Use output_signature in the future
+        
+        """
+        
+        # return tf.data.Dataset.from_generator(self.train_generator,
+        #                                       output_signature=(tf.TensorSpec(shape=(self.image_height, 
+        #                                                                              self.image_width,
+        #                                                                              self._image_channels),
+        #                                                                       dtype=tf.float32),
+        #                                                         tf.TensorSpec(shape=(self.image_height, 
+        #                                                                              self.image_width,
+        #                                                                              1),
+        #                                                                       dtype=tf.float32))
+        #                                       ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
+
+        return tf.data.Dataset.from_generator(self.train_generator,
+                                              output_types=(tf.float32, tf.float32),
+                                              output_shapes=((self.image_height, self.image_width, self.image_channels), 
+                                                             (self.image_height, self.image_width, self.depth_channels))
+                                              ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
+
+    def generate_test_dataset(self):
+        """
+        output_tpyes and output_shapes will be deprecated in a future version but pyright thinks
+        TensorSpec does not accept arguments.
+        
+        """
+        return tf.data.Dataset.from_generator(self.train_generator,
+                                              output_types=(tf.float32, tf.float32),
+                                              output_shapes=((self.image_height, self.image_width, self.image_channels), 
+                                                             (self.image_height, self.image_width, self.depth_channels))
+                                              ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)    
+
+    def prepare(self):
+        self._train_dataset = self.generate_train_dataset()
+        self._test_dataset = self.generate_test_dataset()
+
+    @property
+    def train_dataset(self):
+        return self._train_dataset
+
+    @property
+    def test_dataset(self):
+        return self._test_dataset
+
+    @property
+    def image_channels(self):
+        return self._image_channels
 
     def data_generation(self, batch):
 
-        x = np.empty((self.batch_size, self.image_height, self.image_width, self.n_channels))
+        x = np.empty((self.batch_size, self.image_height, self.image_width, self._image_channels))
         y = np.empty((self.batch_size, self.image_height, self.image_width, 1))
 
         for i, batch_id in enumerate(batch):
@@ -82,3 +179,40 @@ class DataGenerator(tf.keras.utils.Sequence):
             )
 
         return x, y
+
+
+if __name__ == '__main__':
+
+    test_config = {'root_folder': './data/diode',
+                   'dataset_folder': './data/diode/val/outdoor',
+                   'image_height': 768,
+                   'image_width': 1024,
+                   'image_channels': 3,
+                   'depth_channels': 1,
+                   'batch_size': 4,
+                   'train_test_split': 0.75,
+                   'shuffle': True
+                   } 
+
+    dataset = DiodeDataset(**test_config)
+    dataset.prepare()
+
+    for image, depth_map in dataset.train_dataset:
+        assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['image_channels'])
+        assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['depth_channels'])
+
+        depth_map_ = np.exp(depth_map[0].numpy())
+        normalized_depth_map = 255 * (depth_map_ - np.min(depth_map_)) / (np.max(depth_map_) - np.min(depth_map_))
+        normalized_image = 255 * image[0].numpy()
+        
+        tools.show_image(normalized_image.astype(np.uint8), cv2.cvtColor(normalized_depth_map.astype(np.uint8), cv2.COLOR_GRAY2RGB))
+        view_depth.display_depth(normalized_image.astype(np.uint8), np.squeeze(depth_map_), np.squeeze(depth_map_))
+
+        print("Train assertion success!")
+        break
+
+    for image, depth_map in dataset.test_dataset:
+        assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['image_channels'])
+        assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['depth_channels'])
+        print("Test assertion success!")
+        break
