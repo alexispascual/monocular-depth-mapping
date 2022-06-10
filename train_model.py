@@ -19,15 +19,14 @@ def main():
 
     dataset_parameters = config['dataset_parameters']
     experiment_parameters = config['experiment_parameters']
+    diode_parameters = config['diode_parameters']
 
     learning_rate = experiment_parameters['learning_rate']
     epochs = experiment_parameters['epochs']
-    pre_train_epochs = experiment_parameters['pre_train_epochs']
     pretrain = experiment_parameters['pretrain']
 
     image_width = dataset_parameters['image_width']
     image_height = dataset_parameters['image_height']
-    batch_size = dataset_parameters['batch_size']
 
     # Define optimizer
     optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate,
@@ -43,18 +42,15 @@ def main():
     model.compile(optimizer, loss=cross_entropy)
 
     if pretrain:
-        if not os.path.isdir(experiment_parameters['pre_trained_saved_model_dir']):
+        if not os.path.isdir(diode_parameters['saved_model_dir']):
             print("Pre-training model on diode dataset...")
-            model = pretrain_on_diode(model=model,
-                                      image_height=image_height,
-                                      image_width=image_width, 
-                                      epochs=pre_train_epochs,
-                                      batch_size=batch_size)
+            model = pretrain_on_diode(model=model, 
+                                      **diode_parameters)
 
-            model.save(experiment_parameters['pre_trained_saved_model_dir'])
+            model.save(diode_parameters['saved_model_dir'])
         else:
             print("Fetching model pretrained on diode dataset...")
-            model = tf.keras.models.load_model(experiment_parameters['pre_trained_saved_model_dir']) 
+            model = tf.keras.models.load_model(diode_parameters['saved_model_dir']) 
 
     dataset = MoonYardDataset(**dataset_parameters)
     dataset.prepare()

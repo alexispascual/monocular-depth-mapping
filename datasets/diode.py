@@ -18,7 +18,8 @@ class DiodeDataset(BaseDataset):
                  depth_channels: int = 1,
                  batch_size: int = 6, 
                  train_test_split: float = 0.75,
-                 shuffle: bool = True):
+                 shuffle: bool = True,
+                 **kwargs):
         """
         Initialization
         """
@@ -204,7 +205,7 @@ if __name__ == '__main__':
         depth_map_ = np.exp(depth_map[0].numpy())
         normalized_depth_map = 255 * (depth_map_ - np.min(depth_map_)) / (np.max(depth_map_) - np.min(depth_map_))
         normalized_image = 255 * image[0].numpy()
-        
+
         tools.show_image(normalized_image.astype(np.uint8), cv2.cvtColor(normalized_depth_map.astype(np.uint8), cv2.COLOR_GRAY2RGB))
         view_depth.display_depth(normalized_image.astype(np.uint8), np.squeeze(depth_map_), np.squeeze(depth_map_))
 
