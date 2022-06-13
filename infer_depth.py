@@ -38,8 +38,16 @@ def main():
 
     for _, dirs, _ in os.walk(test_dir):
         for directory in dirs:
+
             image_file = os.path.join(test_dir, directory, f'zed_image_left_{directory}.jpg')
             depth_file_path = os.path.join(test_dir, directory, f'depth_map_{directory}.npy')
+
+            if not os.path.isfile(image_file):
+                for file in os.listdir(os.path.join(test_dir, directory)):
+                    if file.endswith('.png'):
+                        image_file = os.path.join(test_dir, directory, file)
+                    elif file.endswith('.npy'):
+                        depth_file_path = os.path.join(test_dir, directory, file)
 
             image = cv2.imread(image_file)
             image = cv2.resize(image, (image_width, image_height))
