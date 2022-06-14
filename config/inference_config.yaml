@@ -1,0 +1,13 @@
+---
+directories:
+  model_directory: './saved_models/diode_depth_estimation_model'
+  data_directory: './data/moon_yard'
+  horizon_directory: './data/horizons'
+  test_directory: './data/test_images'
+image_parameters:
+  image_height: 768
+  image_width: 1024
+experiment_parameters:
+  show_depth_map_gui: True
+  visualize_normalized_depth: True
+...

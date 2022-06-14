@@ -1,56 +1,34 @@
-import tensorflow as tf
-import numpy as np
-import cv2
 import os
+import cv2
 import math
+import numpy as np
+import tensorflow as tf
 
+from tqdm import tqdm
+from sklearn.utils import shuffle
 from .base_dataset import BaseDataset
 from utils import tools, view_depth
 
 
-class DiodeDataset(BaseDataset):
-    def __init__(self, 
-                 root_folder: str = './data/diode',
-                 dataset_folder: str = './data/diode/val/outdoors',
-                 image_height: int = 768, 
-                 image_width: int = 1024, 
-                 image_channels: int = 3,
-                 depth_channels: int = 1,
-                 batch_size: int = 6, 
-                 train_test_split: float = 0.75,
-                 shuffle: bool = True,
-                 **kwargs):
-        """
-        Initialization
-        """
+class MoonYardDataset(BaseDataset):
 
-        if not os.path.exists(root_folder):
+    """Train and testing dataset for the MoonYard Depth maps
+    """
 
-            print("Downloading dataset...")
-            os.makedirs(root_folder)
+    def __init__(self,
+                 root_folder: str,
+                 masks_folder: str,
+                 image_height: int,
+                 image_width: int,
+                 image_channels: int,
+                 depth_channels: int,
+                 batch_size: int,
+                 train_test_split: float
+                 ):
+        super(BaseDataset, self).__init__()
 
-            _ = tf.keras.utils.get_file(
-                os.path.join(root_folder, "val.tar.gz"),
-                cache_subdir=os.path.abspath("."),
-                origin="http://diode-dataset.s3.amazonaws.com/val.tar.gz",
-                extract=True)
-        else:
-            print(f"Diode dataset found in {root_folder}")
-
-        filelist = []
-
-        for root, _, files in os.walk(dataset_folder):
-            for file in files:
-                filelist.append(os.path.join(root, file))
-
-        filelist.sort()
-        data = {
-            "image": [x for x in filelist if x.endswith(".png")],
-            "depth": [x for x in filelist if x.endswith("_depth.npy")],
-            "mask": [x for x in filelist if x.endswith("_depth_mask.npy")],
-        }
-
-        self.data = data
+        self.root_folder = root_folder
+        self.masks_folder = masks_folder
         self.image_height = image_height
         self.image_width = image_width
         self.depth_channels = depth_channels
@@ -58,60 +36,63 @@ class DiodeDataset(BaseDataset):
         self._image_channels = image_channels
         self._batch_size = batch_size
 
-        self.shuffle = shuffle
-        self.min_depth = 0.1
+        self.min_depth = 0.2
+        self.max_depth = 20
 
-        num_files = len(self.data["image"])
-        indices = list(range(num_files))
-        print(f"{num_files} images found.")
+        self.folder_names = []
 
-        if shuffle:
-            np.random.shuffle(indices)
+        tqdm.write("Generating file list...")
+        for _, dirs, _ in os.walk(root_folder):
+            for directory in dirs:
+                self.folder_names.append(directory)
 
-        train_split = math.floor(train_test_split * num_files)
-        self.train_indices = indices[:train_split]
-        self.test_indices = indices[train_split:]
+        tqdm.write("Done!")
+        tqdm.write(f"{len(self.folder_names)} files found.")
 
-    def load(self, image_path, depth_map, mask):
-        """Load input and target image."""
+        self.folder_names = shuffle(self.folder_names)
 
-        image = cv2.imread(image_path)
-        image = cv2.resize(image, (self.image_width, self.image_height))
-        image = tf.image.convert_image_dtype(image, tf.float32)
+        train_split = math.floor(train_test_split * len(self.folder_names))
+        self.train_folders = self.folder_names[:train_split]
+        self.test_folders = self.folder_names[train_split:]
 
-        depth_map = np.load(depth_map).squeeze()
-
-        mask = np.load(mask)
-        mask = mask > 0
-
-        max_depth = min(300, np.percentile(depth_map, 99))
-        depth_map = np.clip(depth_map, self.min_depth, max_depth)
-        depth_map = np.log(depth_map, where=mask)
-
-        depth_map = np.ma.masked_where(~mask, depth_map)
-
-        depth_map = np.clip(depth_map, 0.1, np.log(max_depth))
-        depth_map = cv2.resize(depth_map, (self.image_width, self.image_height))
-        depth_map = np.expand_dims(depth_map, axis=2)
-        depth_map = tf.image.convert_image_dtype(depth_map, tf.float32)
-
-        return image, depth_map
+        tqdm.write(f"{len(self.train_folders)} training files...")
+        tqdm.write(f"{len(self.test_folders)} testing files...")
 
     def train_generator(self):
-        for i in self.train_indices:
-            image, depth_map = self.load(self.data['image'][i],
-                                         self.data['depth'][i],
-                                         self.data['mask'][i])
 
-            yield image, depth_map
+        for dirname in self.train_folders:
+            image_path = os.path.join(self.root_folder, dirname, f'zed_image_left_{dirname}.jpg')
+            depth_file_path = os.path.join(self.root_folder, dirname, f'depth_map_{dirname}.npy')
+            # pount_cloud_file = os.path.join(self.root_folder, dirname, f'point_cloud_{dirname}.npy')
+
+            mask_file = os.path.join(self.masks_folder, f'horizon_{dirname}.jpg')
+
+            image = cv2.imread(image_path)
+            mask = cv2.imread(mask_file)
+            depth = np.load(depth_file_path)
+
+            image = self.image_transforms(image, mask)
+            depth = self.mask_depth_map(depth, mask)
+
+            yield image, depth
 
     def test_generator(self):
-        for i in self.test_indices:
-            image, depth_map = self.load(self.data['image'][i],
-                                         self.data['depth'][i],
-                                         self.data['mask'][i])
 
-            yield image, depth_map
+        for dirname in self.test_folders:
+            image_path = os.path.join(self.root_folder, dirname, f'zed_image_left_{dirname}.jpg')
+            depth_file_path = os.path.join(self.root_folder, dirname, f'depth_map_{dirname}.npy')
+            # pount_cloud_file = os.path.join(self.root_folder, dirname, f'point_cloud_{dirname}.npy')
+            
+            mask_file = os.path.join(self.masks_folder, f'horizon_{dirname}.jpg')
+
+            image = cv2.imread(image_path)
+            mask = cv2.imread(mask_file)
+            depth = np.load(depth_file_path)
+
+            image = self.image_transforms(image, mask)
+            depth = self.mask_depth_map(depth, mask)
+
+            yield image, depth
 
     def generate_train_dataset(self):
         """
@@ -149,11 +130,45 @@ class DiodeDataset(BaseDataset):
                                               output_types=(tf.float32, tf.float32),
                                               output_shapes=((self.image_height, self.image_width, self.image_channels), 
                                                              (self.image_height, self.image_width, self.depth_channels))
-                                              ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)    
+                                              ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
+
+    def mask_depth_map(self, _depth_map, _mask):
+        mask = cv2.resize(_mask, (_depth_map.shape[1], _depth_map.shape[0]))
+        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+
+        mask = mask == 255
+
+        invalid_mask = np.isnan(_depth_map)
+
+        depth_map = np.nan_to_num(_depth_map)
+        depth_map = np.where(mask, depth_map, self.max_depth)
+        depth_map = np.clip(depth_map, self.min_depth, self.max_depth)
+        depth_map = np.log(depth_map, where=~invalid_mask)
+
+        depth_map = np.ma.masked_where(invalid_mask, depth_map)
+
+        depth_map = np.clip(depth_map, 0.1, np.log(self.max_depth))
+        depth_map = cv2.resize(depth_map, (self.image_width, self.image_height))
+
+        depth_map = np.expand_dims(depth_map, axis=2)
+
+        return depth_map
 
     def prepare(self):
         self._train_dataset = self.generate_train_dataset()
         self._test_dataset = self.generate_test_dataset()
+
+    def image_transforms(self, image, mask):
+        mask = cv2.resize(mask, (image.shape[1], image.shape[0]))
+
+        mask = mask == 255
+
+        image = np.where(mask, image, (0, 0, 0))
+        image = (image - np.min(image)) / (np.max(image) - np.min(image))
+        image = tf.image.resize(image, (self.image_height, self.image_width))
+        image = tf.image.convert_image_dtype(image, tf.float32)
+
+        return image
 
     @property
     def train_dataset(self):
@@ -167,45 +182,30 @@ class DiodeDataset(BaseDataset):
     def image_channels(self):
         return self._image_channels
 
-    def data_generation(self, batch):
-
-        x = np.empty((self.batch_size, self.image_height, self.image_width, self._image_channels))
-        y = np.empty((self.batch_size, self.image_height, self.image_width, 1))
-
-        for i, batch_id in enumerate(batch):
-            x[i, ], y[i, ] = self.load(
-                self.data["image"][batch_id],
-                self.data["depth"][batch_id],
-                self.data["mask"][batch_id],
-            )
-
-        return x, y
-
 
 if __name__ == '__main__':
 
-    test_config = {'root_folder': './data/diode',
-                   'dataset_folder': './data/diode/val/outdoor',
+    test_config = {'root_folder': './data/moon_yard',
+                   'masks_folder': './data/horizons',
                    'image_height': 768,
                    'image_width': 1024,
                    'image_channels': 3,
                    'depth_channels': 1,
                    'batch_size': 4,
-                   'train_test_split': 0.75,
-                   'shuffle': True
+                   'train_test_split': 0.75
                    } 
 
-    dataset = DiodeDataset(**test_config)
+    dataset = MoonYardDataset(**test_config)
     dataset.prepare()
 
     for image, depth_map in dataset.train_dataset:
         assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['image_channels'])
         assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['depth_channels'])
-
+        
         depth_map_ = np.exp(depth_map[0].numpy())
         normalized_depth_map = 255 * (depth_map_ - np.min(depth_map_)) / (np.max(depth_map_) - np.min(depth_map_))
         normalized_image = 255 * image[0].numpy()
-
+        
         tools.show_image(normalized_image.astype(np.uint8), cv2.cvtColor(normalized_depth_map.astype(np.uint8), cv2.COLOR_GRAY2RGB))
         view_depth.display_depth(normalized_image.astype(np.uint8), np.squeeze(depth_map_), np.squeeze(depth_map_))
 

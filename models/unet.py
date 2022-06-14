@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 
+
 class DepthEstimationModel(tf.keras.Model):
     def __init__(self, width, height):
         super().__init__()
@@ -101,6 +102,7 @@ class DepthEstimationModel(tf.keras.Model):
         u4 = self.upscale_blocks[3](u3, c1)
 
         return self.conv_layer(u4)
+
 
 class DownscaleBlock(layers.Layer):
     def __init__(

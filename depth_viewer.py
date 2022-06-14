@@ -1,10 +1,9 @@
 import os
 import cv2
 
-import numpy as np
-
 from tqdm import tqdm
 from utils import tools, view_depth
+
 
 def main():
 
@@ -15,11 +14,11 @@ def main():
     directories = config['directories']
 
     data_directory = directories['data_directory']
-    horizon_directory = directories['horizon_directory']
+    # horizon_directory = directories['horizon_directory']
     
     ret = 0
 
-    for root, dirs, files in os.walk(data_directory):
+    for _, dirs, _ in os.walk(data_directory):
         for directory in tqdm(dirs):
             tqdm.write("Reading data...")
 
@@ -33,7 +32,8 @@ def main():
 
             if ret == -1:
                 break
-
         break
+
+
 if __name__ == '__main__':
     main()
