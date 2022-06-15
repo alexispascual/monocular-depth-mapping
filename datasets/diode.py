@@ -2,7 +2,6 @@ import tensorflow as tf
 import numpy as np
 import cv2
 import os
-import math
 
 from .base_dataset import BaseDataset
 from utils import tools, view_depth
@@ -11,13 +10,13 @@ from utils import tools, view_depth
 class DiodeDataset(BaseDataset):
     def __init__(self, 
                  root_folder: str = './data/diode',
-                 dataset_folder: str = './data/diode/val/outdoors',
+                 train_folder: str = './data/diode/train/outdoors',
+                 val_folder: str = './data/diode/val/outdoors',
                  image_height: int = 768, 
                  image_width: int = 1024, 
                  image_channels: int = 3,
                  depth_channels: int = 1,
-                 batch_size: int = 6, 
-                 train_test_split: float = 0.75,
+                 batch_size: int = 6,
                  shuffle: bool = True,
                  **kwargs):
         """
@@ -37,20 +36,8 @@ class DiodeDataset(BaseDataset):
         else:
             print(f"Diode dataset found in {root_folder}")
 
-        filelist = []
-
-        for root, _, files in os.walk(dataset_folder):
-            for file in files:
-                filelist.append(os.path.join(root, file))
-
-        filelist.sort()
-        data = {
-            "image": [x for x in filelist if x.endswith(".png")],
-            "depth": [x for x in filelist if x.endswith("_depth.npy")],
-            "mask": [x for x in filelist if x.endswith("_depth_mask.npy")],
-        }
-
-        self.data = data
+        self.train_data = self.generate_filelist(train_folder)
+        self.val_data = self.generate_filelist(val_folder)
         self.image_height = image_height
         self.image_width = image_width
         self.depth_channels = depth_channels
@@ -58,19 +45,26 @@ class DiodeDataset(BaseDataset):
         self._image_channels = image_channels
         self._batch_size = batch_size
 
-        self.shuffle = shuffle
+        self.max_depth = 300
         self.min_depth = 0.1
 
-        num_files = len(self.data["image"])
-        indices = list(range(num_files))
-        print(f"{num_files} images found.")
+        num_train_files = len(self.train_data["image"])
+        num_val_files = len(self.val_data["image"])
+
+        assert num_train_files != 0, "No training files found!"
+        assert num_val_files != 0, "No validation files found!"
+
+        self.train_indices = list(range(num_train_files))
+        self.val_indices = list(range(num_val_files))
+
+        print(f"{num_train_files} training images found.")
+        print(f"{num_val_files} validation images found.")
 
         if shuffle:
-            np.random.shuffle(indices)
+            np.random.shuffle(self.train_indices)
+            np.random.shuffle(self.val_indices)
 
-        train_split = math.floor(train_test_split * num_files)
-        self.train_indices = indices[:train_split]
-        self.test_indices = indices[train_split:]
+        print(self.train_indices)
 
     def load(self, image_path, depth_map, mask):
         """Load input and target image."""
@@ -99,17 +93,17 @@ class DiodeDataset(BaseDataset):
 
     def train_generator(self):
         for i in self.train_indices:
-            image, depth_map = self.load(self.data['image'][i],
-                                         self.data['depth'][i],
-                                         self.data['mask'][i])
+            image, depth_map = self.load(self.train_data['image'][i],
+                                         self.train_data['depth'][i],
+                                         self.train_data['mask'][i])
 
             yield image, depth_map
 
-    def test_generator(self):
-        for i in self.test_indices:
-            image, depth_map = self.load(self.data['image'][i],
-                                         self.data['depth'][i],
-                                         self.data['mask'][i])
+    def val_generator(self):
+        for i in self.val_indices:
+            image, depth_map = self.load(self.val_data['image'][i],
+                                         self.val_data['depth'][i],
+                                         self.val_data['mask'][i])
 
             yield image, depth_map
 
@@ -139,59 +133,61 @@ class DiodeDataset(BaseDataset):
                                                              (self.image_height, self.image_width, self.depth_channels))
                                               ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)
 
-    def generate_test_dataset(self):
+    def generate_val_dataset(self):
         """
         output_tpyes and output_shapes will be deprecated in a future version but pyright thinks
         TensorSpec does not accept arguments.
         
         """
-        return tf.data.Dataset.from_generator(self.train_generator,
+        return tf.data.Dataset.from_generator(self.val_generator,
                                               output_types=(tf.float32, tf.float32),
                                               output_shapes=((self.image_height, self.image_width, self.image_channels), 
                                                              (self.image_height, self.image_width, self.depth_channels))
                                               ).batch(self._batch_size).prefetch(tf.data.AUTOTUNE)    
 
+    def generate_filelist(self, folder):
+        filelist = []
+
+        for root, _, files in os.walk(folder):
+            for file in files:
+                filelist.append(os.path.join(root, file))
+
+        filelist.sort()
+        data = {
+            "image": [x for x in filelist if x.endswith(".png")],
+            "depth": [x for x in filelist if x.endswith("_depth.npy")],
+            "mask": [x for x in filelist if x.endswith("_depth_mask.npy")],
+        }
+
+        return data
+
     def prepare(self):
         self._train_dataset = self.generate_train_dataset()
-        self._test_dataset = self.generate_test_dataset()
+        self._val_dataset = self.generate_val_dataset()
 
     @property
     def train_dataset(self):
         return self._train_dataset
 
     @property
-    def test_dataset(self):
-        return self._test_dataset
+    def val_dataset(self):
+        return self._val_dataset
 
     @property
     def image_channels(self):
         return self._image_channels
 
-    def data_generation(self, batch):
-
-        x = np.empty((self.batch_size, self.image_height, self.image_width, self._image_channels))
-        y = np.empty((self.batch_size, self.image_height, self.image_width, 1))
-
-        for i, batch_id in enumerate(batch):
-            x[i, ], y[i, ] = self.load(
-                self.data["image"][batch_id],
-                self.data["depth"][batch_id],
-                self.data["mask"][batch_id],
-            )
-
-        return x, y
-
 
 if __name__ == '__main__':
 
     test_config = {'root_folder': './data/diode',
-                   'dataset_folder': './data/diode/val/outdoor',
+                   'train_folder': './data/diode/train/outdoor',
+                   'val_folder': './data/diode/val/outdoor',
                    'image_height': 768,
                    'image_width': 1024,
                    'image_channels': 3,
                    'depth_channels': 1,
                    'batch_size': 4,
-                   'train_test_split': 0.75,
                    'shuffle': True
                    } 
 
@@ -209,11 +205,11 @@ if __name__ == '__main__':
         tools.show_image(normalized_image.astype(np.uint8), cv2.cvtColor(normalized_depth_map.astype(np.uint8), cv2.COLOR_GRAY2RGB))
         view_depth.display_depth(normalized_image.astype(np.uint8), np.squeeze(depth_map_), np.squeeze(depth_map_))
 
-        print("Train assertion success!")
+        print("Train dataset assertion success!")
         break
 
-    for image, depth_map in dataset.test_dataset:
+    for image, depth_map in dataset.val_dataset:
         assert image.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['image_channels'])
         assert depth_map.shape == (test_config['batch_size'], test_config['image_height'], test_config['image_width'], test_config['depth_channels'])
-        print("Test assertion success!")
+        print("Validation dataset assertion success!")
         break
