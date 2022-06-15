@@ -75,8 +75,12 @@ class DiodeDataset(BaseDataset):
 
         mask = np.load(mask)
         mask = mask > 0
-
+        
         max_depth = min(300, np.percentile(depth_map, 99))
+
+        if max_depth == 0:
+            max_depth = self.max_depth
+
         depth_map = np.clip(depth_map, self.min_depth, max_depth)
         depth_map = np.log(depth_map, where=mask)
 
