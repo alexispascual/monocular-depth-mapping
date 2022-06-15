@@ -64,8 +64,6 @@ class DiodeDataset(BaseDataset):
             np.random.shuffle(self.train_indices)
             np.random.shuffle(self.val_indices)
 
-        print(self.train_indices)
-
     def load(self, image_path, depth_map, mask):
         """Load input and target image."""
 

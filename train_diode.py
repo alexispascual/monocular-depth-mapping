@@ -11,7 +11,7 @@ def pretrain_on_diode(model: tf.keras.Model,
 
     model.fit(dataset.train_dataset,
               epochs=kwargs['epochs'],
-              validation_data=dataset.test_dataset)
+              validation_data=dataset.val_dataset)
 
     return model
 
