@@ -25,7 +25,7 @@ class DepthEstimationModel(tf.keras.Model):
             UpscaleBlock(f[1]),
             UpscaleBlock(f[0]),
         ]
-        self.conv_layer = layers.Conv2D(1, (1, 1), padding="same", activation="tanh")
+        self.conv_layer = layers.Conv2D(1, (1, 1), padding="same", activation="relu")
 
     def calculate_loss(self, target, pred):
         # Edges
