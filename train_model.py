@@ -24,9 +24,9 @@ def main():
     learning_rate = experiment_parameters['learning_rate']
     epochs = experiment_parameters['epochs']
     pretrain = experiment_parameters['pretrain']
-    moonyard_checkpoint = experiment_parameters['checkpoint_file']
-    moonyard_checkpoint_dir = os.path.dirname(moonyard_checkpoint)
-    
+    moonyard_checkpoint_file = experiment_parameters['checkpoint_file']
+    moonyard_checkpoint_dir = os.path.dirname(moonyard_checkpoint_file)
+
     image_width = dataset_parameters['image_width']
     image_height = dataset_parameters['image_height']
 
@@ -57,12 +57,16 @@ def main():
     dataset = MoonYardDataset(**dataset_parameters)
     dataset.prepare()
 
-    checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=moonyard_checkpoint,
+    checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=moonyard_checkpoint_file,
                                                              save_weights_only=True,
                                                              verbose=1)
 
-    if len(os.listdir(moonyard_checkpoint_dir)) != 0:
-        model.load_weights(moonyard_checkpoint)
+    if os.path.isdir(moonyard_checkpoint_dir) and len(os.listdir(moonyard_checkpoint_dir)) != 0:
+        print("Loading model from checkpoint...")
+        model.load_weights(tf.train.latest_checkpoint(moonyard_checkpoint_dir))
+        checkpoint_epoch = int(tf.train.latest_checkpoint(moonyard_checkpoint_dir).split("-")[1].split(".")[0])
+        print(f"Found checkpoint trained for {checkpoint_epoch} epochs!")
+        epochs -= checkpoint_epoch
 
     model.fit(dataset.train_dataset,
               epochs=epochs,
