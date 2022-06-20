@@ -4,6 +4,7 @@ diode/
 
 # Model folders
 saved_models/
+checkpoints/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

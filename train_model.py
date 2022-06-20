@@ -24,7 +24,9 @@ def main():
     learning_rate = experiment_parameters['learning_rate']
     epochs = experiment_parameters['epochs']
     pretrain = experiment_parameters['pretrain']
-
+    moonyard_checkpoint = experiment_parameters['checkpoint_file']
+    moonyard_checkpoint_dir = os.path.dirname(moonyard_checkpoint)
+    
     image_width = dataset_parameters['image_width']
     image_height = dataset_parameters['image_height']
 
@@ -55,9 +57,17 @@ def main():
     dataset = MoonYardDataset(**dataset_parameters)
     dataset.prepare()
 
+    checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=moonyard_checkpoint,
+                                                             save_weights_only=True,
+                                                             verbose=1)
+
+    if len(os.listdir(moonyard_checkpoint_dir)) != 0:
+        model.load_weights(moonyard_checkpoint)
+
     model.fit(dataset.train_dataset,
               epochs=epochs,
-              validation_data=dataset.test_dataset)
+              validation_data=dataset.test_dataset,
+              callbacks=[checkpoint_callback])
 
     model.save(experiment_parameters['saved_model_dir'])
 
