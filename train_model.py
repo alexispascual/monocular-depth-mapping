@@ -61,15 +61,19 @@ def main():
                                                              save_weights_only=True,
                                                              verbose=1)
 
-    if os.path.isdir(moonyard_checkpoint_dir) and len(os.listdir(moonyard_checkpoint_dir)) != 0:
+    if tf.train.latest_checkpoint(moonyard_checkpoint_dir) is not None:
         print("Loading model from checkpoint...")
         model.load_weights(tf.train.latest_checkpoint(moonyard_checkpoint_dir))
-        checkpoint_epoch = int(tf.train.latest_checkpoint(moonyard_checkpoint_dir).split("-")[1].split(".")[0])
+        checkpoint_epoch = str(tf.train.latest_checkpoint(moonyard_checkpoint_dir))
+        checkpoint_epoch = int(checkpoint_epoch.split("-")[1].split(".")[0])
         print(f"Found checkpoint trained for {checkpoint_epoch} epochs!")
-        epochs -= checkpoint_epoch
+    else:
+        print("Found no checkpoints! Starting from scratch...")
+        checkpoint_epoch = 0
 
     model.fit(dataset.train_dataset,
               epochs=epochs,
+              initial_epoch=checkpoint_epoch,
               validation_data=dataset.test_dataset,
               callbacks=[checkpoint_callback])
 

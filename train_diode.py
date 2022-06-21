@@ -18,16 +18,18 @@ def pretrain_on_diode(model: tf.keras.Model,
                                                              verbose=1)
 
     checkpoint_dir = os.path.dirname(kwargs['checkpoint_file'])
+    checkpoint_epoch = 0
 
-    if os.path.isdir(checkpoint_dir) and len(checkpoint_dir) != 0:
+    if tf.train.latest_checkpoint(checkpoint_dir) is not None:
         print("Loading model from checkpoint...")
         model.load_weights(tf.train.latest_checkpoint(checkpoint_dir))
-        checkpoint_epoch = int(tf.train.latest_checkpoint(checkpoint_dir).split("-")[1].split(".")[0])
+        checkpoint_epoch = str(tf.train.latest_checkpoint(checkpoint_dir))
+        checkpoint_epoch = int(checkpoint_epoch.split("-")[1].split(".")[0])
         print(f"Found checkpoint trained for {checkpoint_epoch} epochs!")
-        epochs -= checkpoint_epoch
 
     model.fit(dataset.train_dataset,
               epochs=epochs,
+              initial_epoch=checkpoint_epoch,
               validation_data=dataset.val_dataset,
               callbacks=[checkpoint_callback])
 
