@@ -1,8 +1,9 @@
 import os
+import yaml
 
 import tensorflow as tf
-from utils import tools
 
+from utils import tools
 from datasets.moonyard import MoonYardDataset
 from models.unet import DepthEstimationModel
 from train_diode import pretrain_on_diode
@@ -78,6 +79,9 @@ def main():
               callbacks=[checkpoint_callback])
 
     model.save(experiment_parameters['saved_model_dir'])
+
+    with open (os.path.join(experiment_parameters['saved_model_dir'], 'config.yaml'), 'w') as f:
+        yaml.dump(config, f)
 
     return experiment_parameters['saved_model_dir']
 
