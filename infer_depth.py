@@ -62,7 +62,9 @@ def main():
             predicted_depth_map = tf.squeeze(predicted_depth_map).numpy()
             predicted_depth_map = np.exp(predicted_depth_map)
 
-            normalized_depth_map = 255 * (predicted_depth_map - np.min(predicted_depth_map)) / (np.max(predicted_depth_map) - np.min(predicted_depth_map))
+            error_map = np.square(np.subtract(predicted_depth_map, gt_depth_map))
+
+            normalized_depth_map = 255 * (error_map - np.min(error_map)) / (np.max(error_map) - np.min(error_map))
             normalized_depth_map = normalized_depth_map.astype(np.uint8)
             normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2RGB)
 
