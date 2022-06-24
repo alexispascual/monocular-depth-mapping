@@ -1,23 +1,17 @@
 import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
 
 
-def visualize_depth_map(samples, test=False, model=None):
-    input, target = samples
-    cmap = plt.cm.jet
-    cmap.set_bad(color="black")
+def save_error_map(error_map: np.ndarray, path: str):
 
-    if test:
-        pred = model.predict(input)
-        fig, ax = plt.subplots(6, 3, figsize=(50, 50))
-        for i in range(6):
-            ax[i, 0].imshow((input[i].squeeze()))
-            ax[i, 1].imshow((target[i].squeeze()), cmap=cmap)
-            ax[i, 2].imshow((pred[i].squeeze()), cmap=cmap)
+    print("Saving error map...")
+    plt.subplots(figsize=(12, 10), tight_layout=True)
+    ax = sns.heatmap(error_map, cmap='hot', vmin=0, vmax=5.0)
+    ax.axes.xaxis.set_visible(False)
+    ax.axes.yaxis.set_visible(False)
 
-    else:
-        fig, ax = plt.subplots(6, 2, figsize=(50, 50))
-        for i in range(6):
-            ax[i, 0].imshow((input[i].squeeze()))
-            ax[i, 1].imshow((target[i].squeeze()), cmap=cmap)
+    plt.savefig(path)
+    plt.close()
 
-    plt.show()
+    print("Done!")

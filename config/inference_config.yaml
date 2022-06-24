@@ -1,6 +1,6 @@
 ---
 directories:
-  model_directory: './saved_models/depth_estimation_model'
+  model_directory: './saved_models/v3'
   data_directory: './data/moon_yard'
   horizon_directory: './data/horizons'
   test_directory: './data/test_images'
@@ -10,4 +10,5 @@ image_parameters:
 experiment_parameters:
   show_depth_map_gui: True
   visualize_normalized_depth: True
+  save_error_map: True
 ...

@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-from utils import tools, view_depth
+from utils import tools, view_depth, visualizer
 
 
 def main():
@@ -26,6 +26,7 @@ def main():
 
     show_depth_map_gui = experiment_parameters['show_depth_map_gui']
     visualize_normalized_depth = experiment_parameters['visualize_normalized_depth']
+    save_error_map = experiment_parameters['save_error_map']
 
     if not os.path.isdir(model_dir):
         print("Model does not exist! Training model...")
@@ -55,6 +56,8 @@ def main():
             image = tf.image.convert_image_dtype(image, tf.float32)
 
             gt_depth_map = np.load(depth_file_path).squeeze()
+            gt_depth_map = cv2.resize(gt_depth_map, (image_width, image_height))
+            gt_depth_map = np.nan_to_num(gt_depth_map)
 
             predicted_depth_map = model.predict(image)
 
@@ -64,7 +67,7 @@ def main():
 
             error_map = np.square(np.subtract(predicted_depth_map, gt_depth_map))
 
-            normalized_depth_map = 255 * (error_map - np.min(error_map)) / (np.max(error_map) - np.min(error_map))
+            normalized_depth_map = 255 * (predicted_depth_map - np.min(predicted_depth_map)) / (np.max(predicted_depth_map) - np.min(predicted_depth_map))
             normalized_depth_map = normalized_depth_map.astype(np.uint8)
             normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2RGB)
 
@@ -73,6 +76,9 @@ def main():
 
             if visualize_normalized_depth:
                 tools.show_image(image, normalized_depth_map)
+
+            if save_error_map:
+                visualizer.save_error_map(error_map, os.path.join(test_dir, directory, f'error_map_{directory}.jpg'))
 
             if show_depth_map_gui:
                 view_depth.display_depth(image, predicted_depth_map, gt_depth_map)
