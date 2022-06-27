@@ -51,6 +51,11 @@ def main():
                         depth_file_path = os.path.join(test_dir, directory, file)
 
             image = cv2.imread(image_file)
+
+            if image is None:
+                print(f"No image found in {image_file}")
+                continue
+
             image = cv2.resize(image, (image_width, image_height))
             image = np.expand_dims(image, axis=0)
             image = tf.image.convert_image_dtype(image, tf.float32)
@@ -78,7 +83,7 @@ def main():
                 tools.show_image(image, normalized_depth_map)
 
             if save_error_map:
-                visualizer.save_error_map(error_map, os.path.join(test_dir, directory, f'error_map_{directory}.jpg'))
+                visualizer.save_error_map(error_map, os.path.join(test_dir, 'error_maps', f'error_map_{directory}.jpg'))
 
             if show_depth_map_gui:
                 view_depth.display_depth(image, predicted_depth_map, gt_depth_map)

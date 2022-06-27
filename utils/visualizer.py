@@ -7,7 +7,7 @@ def save_error_map(error_map: np.ndarray, path: str):
 
     print("Saving error map...")
     plt.subplots(figsize=(12, 10), tight_layout=True)
-    ax = sns.heatmap(error_map, cmap='hot', vmin=0, vmax=5.0)
+    ax = sns.heatmap(error_map, cmap='RdBu', vmin=-5.0, vmax=5.0)
     ax.axes.xaxis.set_visible(False)
     ax.axes.yaxis.set_visible(False)
 
