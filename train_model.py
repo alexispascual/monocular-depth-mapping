@@ -80,7 +80,7 @@ def main():
 
     model.save(experiment_parameters['saved_model_dir'])
 
-    with open (os.path.join(experiment_parameters['saved_model_dir'], 'config.yaml'), 'w') as f:
+    with open(os.path.join(experiment_parameters['saved_model_dir'], 'config.yaml'), 'w') as f:
         yaml.dump(config, f)
 
     return experiment_parameters['saved_model_dir']

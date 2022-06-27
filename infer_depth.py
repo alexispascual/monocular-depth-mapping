@@ -65,7 +65,7 @@ def main():
             predicted_depth_map = tf.squeeze(predicted_depth_map).numpy()
             predicted_depth_map = np.exp(predicted_depth_map)
 
-            error_map = np.square(np.subtract(predicted_depth_map, gt_depth_map))
+            error_map = np.subtract(predicted_depth_map, gt_depth_map)
 
             normalized_depth_map = 255 * (predicted_depth_map - np.min(predicted_depth_map)) / (np.max(predicted_depth_map) - np.min(predicted_depth_map))
             normalized_depth_map = normalized_depth_map.astype(np.uint8)
