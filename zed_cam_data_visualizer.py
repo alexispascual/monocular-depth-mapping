@@ -1,5 +1,6 @@
 import os
 import cv2
+from matplotlib.pyplot import draw
 import numpy as np
 
 from tqdm import tqdm
@@ -9,16 +10,24 @@ from utils.create_mask import draw_mask
 
 
 def main():
-    data_directory = './data/moon_yard'
-    edges_directory = './data/edges'
-    horizon_directory = './data/horizons'
-    normalized_depth_directory = './data/normalized_depth'
 
-    show_images = True
-    save_images = False
-    draw_mask_flag = True 
-    detect_edges = True
-    generate_depth_maps = False
+    default_config = './config/zed_cam_viewer_config.yaml'
+
+    config = tools.load_config(default_config)
+
+    directories = config['directories']
+    flags = config['flags']
+
+    data_directory = directories['data_directory']
+    edges_directory = directories['edges_directory']
+    horizon_directory = directories['horizon_directory']
+    normalized_depth_directory = directories['normalized_depth_directory']
+
+    show_images = flags['show_images']
+    save_images = flags['save_images']
+    draw_mask_flag = flags['draw_mask_flag'] 
+    detect_edges = flags['detect_edges']
+    generate_depth_maps = flags['generate_depth_maps']
     ret = 0
 
     tools.check_directory(edges_directory)
@@ -29,7 +38,6 @@ def main():
 
     for _, dirs, _ in os.walk(data_directory):
         for directory in tqdm(dirs):
-            tqdm.write("Reading image...")
             image_file = os.path.join(data_directory, directory, f'zed_image_left_{directory}.jpg')
             image = cv2.imread(image_file)
             image = cv2.resize(image, (0, 0), None, .5, .5)
@@ -51,7 +59,6 @@ def main():
                                      f'normalized_depth_{directory}.jpg')
 
             if detect_edges:
-                tqdm.write("Detecting edges...")
 
                 edges = detect_edge(image)
                 

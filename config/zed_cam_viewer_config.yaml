@@ -1,0 +1,14 @@
+---
+directories:
+  data_directory: './data/moon_yard'
+  edges_directory: './data/edges'
+  horizon_directory: './data/horizons'
+  normalized_depth_directory: './data/normalized_depth'
+
+flags:
+  show_images: True
+  save_images: True
+  draw_mask_flag: False
+  detect_edges: True
+  generate_depth_maps: False
+...
