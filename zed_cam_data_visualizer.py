@@ -1,6 +1,5 @@
 import os
 import cv2
-from matplotlib.pyplot import draw
 import numpy as np
 
 from tqdm import tqdm
