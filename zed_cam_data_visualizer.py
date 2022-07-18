@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 
 from tqdm import tqdm
+from PIL import Image
 
 from utils import tools
 from utils.create_mask import draw_mask
@@ -24,9 +25,10 @@ def main():
 
     show_images = flags['show_images']
     save_images = flags['save_images']
+    show_depth = flags['show_depth']
     draw_mask_flag = flags['draw_mask_flag'] 
     detect_edges = flags['detect_edges']
-    generate_depth_maps = flags['generate_depth_maps']
+    depth_from_point_cloud = flags['depth_from_point_cloud']
     ret = 0
 
     tools.check_directory(edges_directory)
@@ -37,24 +39,47 @@ def main():
 
     for _, dirs, _ in os.walk(data_directory):
         for directory in tqdm(dirs):
-            
+
             image_file = os.path.join(data_directory, directory, f'zed_image_left_{directory}.jpg')
 
             if not os.path.isfile(image_file):
                 image_file = os.path.join(data_directory, directory, f'zed_image_left_{directory}.png')
 
             image = cv2.imread(image_file)
-            image = cv2.resize(image, (0, 0), None, .5, .5)
+            # image = cv2.resize(image, (0, 0), None, .5, .5)
 
-            if generate_depth_maps:
-                tqdm.write("Calculating depth from point cloud...") 
-                point_cloud = np.load(os.path.join(data_directory, directory, f'point_cloud_{directory}.npy'))
-                normalized_depth_map = tools.generate_depth_map(point_cloud, normalize=True)
-                normalized_depth_map = cv2.resize(normalized_depth_map, (0, 0), None, .5, .5)
-                normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
+            if show_depth:
+                normalized_depth_map = None
+
+                if depth_from_point_cloud:
+                    tqdm.write("Calculating depth from point cloud...") 
+                    point_cloud = np.load(os.path.join(data_directory, directory, f'point_cloud_{directory}.npy'))
+                    normalized_depth_map = tools.generate_depth_map(point_cloud, normalize=True)
+                    # normalized_depth_map = cv2.resize(normalized_depth_map, (0, 0), None, .5, .5)
+                    normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
+
+                else:
+                    tqdm.write("Loading depth map from file...")
+                    depth_file = os.path.join(data_directory, directory, f'depth_map_{directory}.npy')
+
+                    if os.path.isfile(depth_file):
+                        depth_map = np.load(depth_file)
+                        normalized_depth_map = 255 * (depth_map - np.min(depth_map)) / (np.max(depth_map) - np.min(depth_map))
+                        normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
+
+                    else:
+                        depth_file = os.path.join(data_directory, directory, f'depth_map_{directory}.tiff')
+                        depth_map = np.array(Image.open(depth_file))
+                        depth_map = np.nan_to_num(depth_map, posinf=20.0)
+                        normalized_depth_map = 255 * (depth_map - np.min(depth_map)) / (np.max(depth_map) - np.min(depth_map))
+                        print(f"{np.max(depth_map) = }")
+                        print(f"{np.min(depth_map) = }")
+                        print(f"{np.max(normalized_depth_map) = }")
+                        print(f"{np.min(normalized_depth_map) = }")
+                        normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
 
                 if show_images:
-                    ret = tools.show_image(image, normalized_depth_map)
+                    ret = tools.show_image(image, normalized_depth_map.astype(np.uint8))
 
                 if save_images:
                     tools.save_image(image,
