@@ -6,8 +6,8 @@ directories:
   normalized_depth_directory: 'D:\\PhD\\Depth Estimation\\Analogue\\analogue_july12\\normalized_depth'
 
 flags:
-  detect_edges: True
-  show_depth: False
+  detect_edges: False
+  show_depth: True
   depth_from_point_cloud: False
 
   show_images: True

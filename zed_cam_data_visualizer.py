@@ -72,10 +72,6 @@ def main():
                         depth_map = np.array(Image.open(depth_file))
                         depth_map = np.nan_to_num(depth_map, posinf=20.0)
                         normalized_depth_map = 255 * (depth_map - np.min(depth_map)) / (np.max(depth_map) - np.min(depth_map))
-                        print(f"{np.max(depth_map) = }")
-                        print(f"{np.min(depth_map) = }")
-                        print(f"{np.max(normalized_depth_map) = }")
-                        print(f"{np.min(normalized_depth_map) = }")
                         normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
 
                 if show_images:
