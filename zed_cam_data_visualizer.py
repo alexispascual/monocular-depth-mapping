@@ -37,7 +37,12 @@ def main():
 
     for _, dirs, _ in os.walk(data_directory):
         for directory in tqdm(dirs):
+            
             image_file = os.path.join(data_directory, directory, f'zed_image_left_{directory}.jpg')
+
+            if not os.path.isfile(image_file):
+                image_file = os.path.join(data_directory, directory, f'zed_image_left_{directory}.png')
+
             image = cv2.imread(image_file)
             image = cv2.resize(image, (0, 0), None, .5, .5)
 

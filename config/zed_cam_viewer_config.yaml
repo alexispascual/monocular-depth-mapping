@@ -1,13 +1,13 @@
 ---
 directories:
-  data_directory: './data/moon_yard'
-  edges_directory: './data/edges'
-  horizon_directory: './data/horizons'
-  normalized_depth_directory: './data/normalized_depth'
+  data_directory: 'D:\\PhD\\Depth Estimation\\Analogue\\analogue_july12\\data'
+  edges_directory: 'D:\\PhD\\Depth Estimation\\Analogue\\analogue_july12\\edges'
+  horizon_directory: 'D:\\PhD\\Depth Estimation\\Analogue\\analogue_july12\\horizons'
+  normalized_depth_directory: 'D:\\PhD\\Depth Estimation\\Analogue\\analogue_july12\\normalized_depth'
 
 flags:
   show_images: True
-  save_images: True
+  save_images: False
   draw_mask_flag: False
   detect_edges: True
   generate_depth_maps: False
