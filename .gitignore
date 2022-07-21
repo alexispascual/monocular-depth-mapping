@@ -1,3 +1,6 @@
+# Data products
+*.mp4
+
 # Data folder
 data/
 diode/

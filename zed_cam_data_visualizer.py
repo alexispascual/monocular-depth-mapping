@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+import glob
 
 from tqdm import tqdm
 from PIL import Image
@@ -109,25 +110,32 @@ def main():
 
 
 def create_video():
-    data_directory = './data/moon_yard'
+    data_directory = 'D:\\PhD\\depth_estimation\\datasets\\campaign_2\\terrain_classified_masks\\predictions'
 
-    fourcc = cv2.VideoWriter_fourcc(*'X264')
-    video_writer = cv2.VideoWriter(filename='depth_map_husky.mp4', 
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    video_writer = cv2.VideoWriter(filename='terrain_masks_campaign_2.mp4', 
                                    fourcc=fourcc, 
                                    fps=5, 
-                                   frameSize=(1920, 540))
-
-    for _, dirs, _ in os.walk(data_directory):
-        for directory in tqdm(dirs):
-            image_file = os.path.join(data_directory, directory, f'side_by_side_view_{directory}.jpg')
-
-            if os.path.exists(image_file):
-                image = cv2.imread(image_file)
-
-                video_writer.write(image)
-        break
+                                   frameSize=(930, 523))
+    file_paths = glob.glob(os.path.join(data_directory, "*.png"))
+    
+    for file in tqdm(file_paths):
+        image = cv2.imread(file)
+        if image is not None:
+            video_writer.write(image)
 
     video_writer.release()
+    # for _, _, files in os.walk(data_directory):
+    #     for file in tqdm(files):
+    #         image_file = os.path.join(data_directory, f'side_by_side_view_{directory}.jpg')
+
+    #         if os.path.exists(image_file):
+    #             image = cv2.imread(image_file)
+
+    #             video_writer.write(image)
+    #     break
+
+    # video_writer.release()
 
 
 def detect_edge(image):
@@ -147,4 +155,4 @@ def detect_edge(image):
     
 
 if __name__ == '__main__':
-    main()
+    create_video()
