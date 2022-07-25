@@ -66,12 +66,16 @@ def save_image(image,
     cv2.imwrite(file_name, image)
 
 
-def scan_horizon_files(directory: str):
+def scan_horizon_files(directory: str, campaign_2: bool = False):
 
     horizons = []
 
-    for _, _, files in os.walk(directory):
-        horizons = [f.split('.')[0].split('_')[1] for f in files]
+    if campaign_2:
+        for _, _, files in os.walk(directory):
+            horizons = [''.join(re.split(r'(\d+)', f)[1:-1]) for f in files]
+    else:
+        for _, _, files in os.walk(directory):
+            horizons = [f.split('.')[0].split('_')[1] for f in files]
 
     return horizons
 

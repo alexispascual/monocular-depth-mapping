@@ -13,10 +13,10 @@ filenames:
   video_file_name: 'edges_campaign_1.mp4'
 
 flags:
-  show_edges: True
+  show_edges: False
   show_depth: False
   depth_from_point_cloud: False
-  show_edges_from_segmentation: False
+  show_edges_from_segmentation: True
 
   show_images: True
   save_images: False

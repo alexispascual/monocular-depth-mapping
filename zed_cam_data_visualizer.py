@@ -47,8 +47,6 @@ def main():
     tools.check_directory(normalized_depth_directory)
     tools.check_directory(horizon_directory)
 
-    horizon_files = tools.scan_horizon_files(horizon_directory)
-
     if create_video_flag:
         create_video(video_directory, video_file_name)
 
@@ -57,22 +55,28 @@ def main():
         segmentation_masks = tools.get_images_from_directory(segmentation_masks_directory)
         segmentation_pred = tools.get_images_from_directory(segmentation_pred_directory)
 
-        for image_file, mask_file, pred_file in zip(image_files, segmentation_masks, segmentation_pred):
+        horizon_files = tools.scan_horizon_files(horizon_directory, campaign_2=True)
+
+        for image_file, mask_file, pred_file in tqdm(zip(image_files, segmentation_masks, segmentation_pred), total=len(image_files)):
             image = cv2.imread(image_file)
             mask = cv2.imread(mask_file)
             pred = cv2.imread(pred_file)
 
             ret = tools.show_image(image, pred)
 
-            edges = detect_edge(mask)
+            if draw_mask_flag:
+                edges = detect_edge(mask)
 
-            name = ''.join(re.split(r'(\d+)', image_file.split("\\")[-1])[1:-1])
-            draw_mask(edges, horizon_directory, name)
+                name = ''.join(re.split(r'(\d+)', image_file.split("\\")[-1])[1:-1])
+                if name not in horizon_files:
+                    draw_mask(edges, horizon_directory, name)
 
             if ret == -1:
                 break
 
     else:
+        horizon_files = tools.scan_horizon_files(horizon_directory)
+
         for _, dirs, _ in os.walk(data_directory):
             for directory in tqdm(dirs):
 
