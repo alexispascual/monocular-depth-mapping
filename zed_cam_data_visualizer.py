@@ -18,18 +18,23 @@ def main():
 
     directories = config['directories']
     flags = config['flags']
+    filenames = config['filenames']
 
     data_directory = directories['data_directory']
     edges_directory = directories['edges_directory']
     horizon_directory = directories['horizon_directory']
     normalized_depth_directory = directories['normalized_depth_directory']
+    video_directory = directories['video_directory']
+
+    video_file_name = filenames['video_file_name']
 
     show_images = flags['show_images']
     save_images = flags['save_images']
     show_depth = flags['show_depth']
     draw_mask_flag = flags['draw_mask_flag'] 
-    detect_edges = flags['detect_edges']
+    show_edges = flags['show_edges']
     depth_from_point_cloud = flags['depth_from_point_cloud']
+    create_video_flag = flags['create_video_flag']
     ret = 0
 
     tools.check_directory(edges_directory)
@@ -37,6 +42,9 @@ def main():
     tools.check_directory(horizon_directory)
 
     horizon_files = tools.scan_horizon_files(horizon_directory)
+
+    if create_video_flag:
+        create_video(video_directory, video_file_name)
 
     for _, dirs, _ in os.walk(data_directory):
         for directory in tqdm(dirs):
@@ -82,7 +90,7 @@ def main():
                 save_dir = normalized_depth_directory
                 save_file_name = f'normalized_depth_{directory}.jpg'
 
-            if detect_edges:
+            if show_edges:
 
                 edges = detect_edge(image)
 
@@ -114,11 +122,10 @@ def main():
         break
 
 
-def create_video():
-    data_directory = 'C:\\Users\\Kraken\\Documents\\Projects\\monocular-depth-mapping\\data\\edges'
+def create_video(data_directory: str, filename: str):
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    video_writer = cv2.VideoWriter(filename='edges_campaign_1.mp4', 
+    video_writer = cv2.VideoWriter(filename=filename, 
                                    fourcc=fourcc, 
                                    fps=5, 
                                    frameSize=(1920, 540))

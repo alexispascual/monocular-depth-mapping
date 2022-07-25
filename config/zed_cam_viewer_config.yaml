@@ -4,14 +4,20 @@ directories:
   edges_directory: 'D:\PhD\depth_estimation\datasets\campaign_2\edges'
   horizon_directory: './data/horizons'
   normalized_depth_directory: './normalized_depth'
+  video_directory: 'D:\PhD\depth_estimation\datasets\campaign_2\edges'
+
+files:
+  video_file_name: 'edges_campaign_1.mp4'
 
 flags:
-  detect_edges: True
-  show_depth: False
+  show_edges: False
+  show_depth: True
   depth_from_point_cloud: False
 
-  show_images: False
-  save_images: True
+  show_images: True
+  save_images: False
   
   draw_mask_flag: False
+  
+  create_video_flag: False
 ...
