@@ -1,4 +1,5 @@
 import os
+import re
 import cv2
 import numpy as np
 import glob
@@ -25,6 +26,9 @@ def main():
     horizon_directory = directories['horizon_directory']
     normalized_depth_directory = directories['normalized_depth_directory']
     video_directory = directories['video_directory']
+    image_directory = directories['image_directory']
+    segmentation_masks_directory = directories['segmentation_masks_directory']
+    segmentation_pred_directory = directories['segmentation_predictions_directory']
 
     video_file_name = filenames['video_file_name']
 
@@ -35,6 +39,8 @@ def main():
     show_edges = flags['show_edges']
     depth_from_point_cloud = flags['depth_from_point_cloud']
     create_video_flag = flags['create_video_flag']
+    show_edges_from_segmentation = flags['show_edges_from_segmentation']
+
     ret = 0
 
     tools.check_directory(edges_directory)
@@ -46,80 +52,100 @@ def main():
     if create_video_flag:
         create_video(video_directory, video_file_name)
 
-    for _, dirs, _ in os.walk(data_directory):
-        for directory in tqdm(dirs):
+    elif show_edges_from_segmentation:
+        image_files = tools.get_images_from_directory(image_directory)
+        segmentation_masks = tools.get_images_from_directory(segmentation_masks_directory)
+        segmentation_pred = tools.get_images_from_directory(segmentation_pred_directory)
 
-            image_file = os.path.join(data_directory, directory, f'zed_image_left_{directory}.jpg')
-
-            if not os.path.isfile(image_file):
-                image_file = os.path.join(data_directory, directory, f'zed_image_left_{directory}.png')
-
+        for image_file, mask_file, pred_file in zip(image_files, segmentation_masks, segmentation_pred):
             image = cv2.imread(image_file)
-            # image = cv2.resize(image, (0, 0), None, .5, .5)
-            image_2 = None
-            save_dir = data_directory
-            save_file_name = f'image_2{directory}.jpg'
+            mask = cv2.imread(mask_file)
+            pred = cv2.imread(pred_file)
 
-            if show_depth:
-                normalized_depth_map = None
+            ret = tools.show_image(image, pred)
 
-                if depth_from_point_cloud:
-                    tqdm.write("Calculating depth from point cloud...") 
-                    point_cloud = np.load(os.path.join(data_directory, directory, f'point_cloud_{directory}.npy'))
-                    normalized_depth_map = tools.generate_depth_map(point_cloud, normalize=True)
-                    # normalized_depth_map = cv2.resize(normalized_depth_map, (0, 0), None, .5, .5)
-                    normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
+            edges = detect_edge(mask)
 
-                else:
-                    tqdm.write("Loading depth map from file...")
-                    depth_file = os.path.join(data_directory, directory, f'depth_map_{directory}.npy')
-
-                    if os.path.isfile(depth_file):
-                        depth_map = np.load(depth_file)
-                        normalized_depth_map = 255 * (depth_map - np.min(depth_map)) / (np.max(depth_map) - np.min(depth_map))
-                        normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR).astype(np.uint8)
-
-                    else:
-                        depth_file = os.path.join(data_directory, directory, f'depth_map_{directory}.tiff')
-                        depth_map = np.array(Image.open(depth_file))
-                        depth_map = np.nan_to_num(depth_map, posinf=20.0)
-                        normalized_depth_map = 255 * (depth_map - np.min(depth_map)) / (np.max(depth_map) - np.min(depth_map))
-                        normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR).astype(np.uint8)
-
-                image_2 = normalized_depth_map
-                save_dir = normalized_depth_directory
-                save_file_name = f'normalized_depth_{directory}.jpg'
-
-            if show_edges:
-
-                edges = detect_edge(image)
-
-                if draw_mask_flag:
-
-                    ret = tools.show_image(image, edges)
-
-                    if directory not in horizon_files:
-                        draw_mask(edges, 
-                                  horizon_directory, 
-                                  directory)
-
-                image_2 = edges
-                save_dir = edges_directory
-                save_file_name = f'edges_{directory}.jpg'
-
-            if show_images:
-                ret = tools.show_image(image, image_2)
-
-            if save_images:
-                tools.save_image(image,
-                                 image_2, 
-                                 save_dir, 
-                                 save_file_name)
+            name = ''.join(re.split(r'(\d+)', image_file.split("\\")[-1])[1:-1])
+            draw_mask(edges, horizon_directory, name)
 
             if ret == -1:
                 break
 
-        break
+    else:
+        for _, dirs, _ in os.walk(data_directory):
+            for directory in tqdm(dirs):
+
+                image_file = os.path.join(data_directory, directory, f'zed_image_left_{directory}.jpg')
+
+                if not os.path.isfile(image_file):
+                    image_file = os.path.join(data_directory, directory, f'zed_image_left_{directory}.png')
+
+                image = cv2.imread(image_file)
+                # image = cv2.resize(image, (0, 0), None, .5, .5)
+                image_2 = None
+                save_dir = data_directory
+                save_file_name = f'image_2{directory}.jpg'
+
+                if show_depth:
+                    normalized_depth_map = None
+
+                    if depth_from_point_cloud:
+                        tqdm.write("Calculating depth from point cloud...") 
+                        point_cloud = np.load(os.path.join(data_directory, directory, f'point_cloud_{directory}.npy'))
+                        normalized_depth_map = tools.generate_depth_map(point_cloud, normalize=True)
+                        # normalized_depth_map = cv2.resize(normalized_depth_map, (0, 0), None, .5, .5)
+                        normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
+
+                    else:
+                        tqdm.write("Loading depth map from file...")
+                        depth_file = os.path.join(data_directory, directory, f'depth_map_{directory}.npy')
+
+                        if os.path.isfile(depth_file):
+                            depth_map = np.load(depth_file)
+                            normalized_depth_map = 255 * (depth_map - np.min(depth_map)) / (np.max(depth_map) - np.min(depth_map))
+                            normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR).astype(np.uint8)
+
+                        else:
+                            depth_file = os.path.join(data_directory, directory, f'depth_map_{directory}.tiff')
+                            depth_map = np.array(Image.open(depth_file))
+                            depth_map = np.nan_to_num(depth_map, posinf=20.0)
+                            normalized_depth_map = 255 * (depth_map - np.min(depth_map)) / (np.max(depth_map) - np.min(depth_map))
+                            normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR).astype(np.uint8)
+
+                    image_2 = normalized_depth_map
+                    save_dir = normalized_depth_directory
+                    save_file_name = f'normalized_depth_{directory}.jpg'
+
+                if show_edges:
+
+                    edges = detect_edge(image)
+
+                    if draw_mask_flag:
+
+                        ret = tools.show_image(image, edges)
+
+                        if directory not in horizon_files:
+                            draw_mask(edges, 
+                                      horizon_directory, 
+                                      directory)
+
+                    image_2 = edges
+                    save_dir = edges_directory
+                    save_file_name = f'edges_{directory}.jpg'
+
+                if show_images:
+                    ret = tools.show_image(image, image_2)
+
+                if save_images:
+                    tools.save_image(image,
+                                     image_2, 
+                                     save_dir, 
+                                     save_file_name)
+
+                if ret == -1:
+                    break
+            break
 
 
 def create_video(data_directory: str, filename: str):

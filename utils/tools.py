@@ -1,4 +1,5 @@
 import os
+import re
 import cv2
 import sys
 import yaml
@@ -130,3 +131,23 @@ def generate_depth_map(point_cloud: np.ndarray,
 
     else:
         return depth_estimate
+
+
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+
+def natural_keys(text):
+    return [atoi(c) for c in re.split(r'(\d+)', text)]
+
+
+def get_images_from_directory(filepath: str):
+    paths = []
+
+    for entry in os.scandir(filepath):
+        if (entry.path.endswith(".jpg") or entry.path.endswith(".jpeg")
+                or entry.path.endswith(".png")) and entry.is_file():
+            paths.append(entry.path)
+
+    paths.sort(key=natural_keys)
+    return paths

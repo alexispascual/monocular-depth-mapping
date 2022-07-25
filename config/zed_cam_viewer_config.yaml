@@ -2,22 +2,26 @@
 directories:
   data_directory: 'D:\PhD\depth_estimation\datasets\campaign_2\data'
   edges_directory: 'D:\PhD\depth_estimation\datasets\campaign_2\edges'
-  horizon_directory: './data/horizons'
-  normalized_depth_directory: './normalized_depth'
+  horizon_directory: 'D:\PhD\depth_estimation\datasets\campaign_2\horizons'
+  normalized_depth_directory: 'D:\PhD\depth_estimation\datasets\campaign_2\normalized_depth'
   video_directory: 'D:\PhD\depth_estimation\datasets\campaign_2\edges'
+  image_directory: 'D:\PhD\depth_estimation\datasets\campaign_2\terrain_classified_masks\inputs'
+  segmentation_masks_directory: 'D:\PhD\depth_estimation\datasets\campaign_2\terrain_classified_masks\masks'
+  segmentation_predictions_directory: 'D:\PhD\depth_estimation\datasets\campaign_2\terrain_classified_masks\predictions'
 
-files:
+filenames:
   video_file_name: 'edges_campaign_1.mp4'
 
 flags:
-  show_edges: False
-  show_depth: True
+  show_edges: True
+  show_depth: False
   depth_from_point_cloud: False
+  show_edges_from_segmentation: False
 
   show_images: True
   save_images: False
   
-  draw_mask_flag: False
-  
+  draw_mask_flag: True
+
   create_video_flag: False
 ...
