@@ -1,17 +1,17 @@
 ---
 directories:
-  data_directory: 'D:\\PhD\\Depth Estimation\\Analogue\\analogue_july12\\data'
-  edges_directory: 'D:\\PhD\\Depth Estimation\\Analogue\\analogue_july12\\edges'
-  horizon_directory: 'D:\\PhD\\Depth Estimation\\Analogue\\analogue_july12\\horizons'
-  normalized_depth_directory: 'D:\\PhD\\Depth Estimation\\Analogue\\analogue_july12\\normalized_depth'
+  data_directory: 'D:\PhD\depth_estimation\datasets\campaign_2\data'
+  edges_directory: 'D:\PhD\depth_estimation\datasets\campaign_2\edges'
+  horizon_directory: './data/horizons'
+  normalized_depth_directory: './normalized_depth'
 
 flags:
-  detect_edges: False
-  show_depth: True
+  detect_edges: True
+  show_depth: False
   depth_from_point_cloud: False
 
-  show_images: True
-  save_images: False
+  show_images: False
+  save_images: True
   
   draw_mask_flag: False
 ...

@@ -110,14 +110,14 @@ def main():
 
 
 def create_video():
-    data_directory = 'D:\\PhD\\depth_estimation\\datasets\\campaign_2\\terrain_classified_masks\\predictions'
+    data_directory = 'C:\\Users\\Kraken\\Documents\\Projects\\monocular-depth-mapping\\data\\edges'
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    video_writer = cv2.VideoWriter(filename='terrain_masks_campaign_2.mp4', 
+    video_writer = cv2.VideoWriter(filename='edges_campaign_1.mp4', 
                                    fourcc=fourcc, 
                                    fps=5, 
-                                   frameSize=(930, 523))
-    file_paths = glob.glob(os.path.join(data_directory, "*.png"))
+                                   frameSize=(1920, 540))
+    file_paths = glob.glob(os.path.join(data_directory, "*.jpg"))
     
     for file in tqdm(file_paths):
         image = cv2.imread(file)
