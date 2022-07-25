@@ -48,6 +48,9 @@ def main():
 
             image = cv2.imread(image_file)
             # image = cv2.resize(image, (0, 0), None, .5, .5)
+            image_2 = None
+            save_dir = data_directory
+            save_file_name = f'image_2{directory}.jpg'
 
             if show_depth:
                 normalized_depth_map = None
@@ -66,42 +69,44 @@ def main():
                     if os.path.isfile(depth_file):
                         depth_map = np.load(depth_file)
                         normalized_depth_map = 255 * (depth_map - np.min(depth_map)) / (np.max(depth_map) - np.min(depth_map))
-                        normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
+                        normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR).astype(np.uint8)
 
                     else:
                         depth_file = os.path.join(data_directory, directory, f'depth_map_{directory}.tiff')
                         depth_map = np.array(Image.open(depth_file))
                         depth_map = np.nan_to_num(depth_map, posinf=20.0)
                         normalized_depth_map = 255 * (depth_map - np.min(depth_map)) / (np.max(depth_map) - np.min(depth_map))
-                        normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR)
+                        normalized_depth_map = cv2.cvtColor(normalized_depth_map, cv2.COLOR_GRAY2BGR).astype(np.uint8)
 
-                if show_images:
-                    ret = tools.show_image(image, normalized_depth_map.astype(np.uint8))
-
-                if save_images:
-                    tools.save_image(image,
-                                     normalized_depth_map, 
-                                     normalized_depth_directory, 
-                                     f'normalized_depth_{directory}.jpg')
+                image_2 = normalized_depth_map
+                save_dir = normalized_depth_directory
+                save_file_name = f'normalized_depth_{directory}.jpg'
 
             if detect_edges:
 
                 edges = detect_edge(image)
-                
-                if show_images:
+
+                if draw_mask_flag:
+
                     ret = tools.show_image(image, edges)
 
-                    if draw_mask_flag:
-                        if directory not in horizon_files:
-                            draw_mask(edges, 
-                                      horizon_directory, 
-                                      directory)
+                    if directory not in horizon_files:
+                        draw_mask(edges, 
+                                  horizon_directory, 
+                                  directory)
 
-                if save_images:
-                    tools.save_image(image,
-                                     edges, 
-                                     edges_directory, 
-                                     f'edges_{directory}.jpg')
+                image_2 = edges
+                save_dir = edges_directory
+                save_file_name = f'edges_{directory}.jpg'
+
+            if show_images:
+                ret = tools.show_image(image, image_2)
+
+            if save_images:
+                tools.save_image(image,
+                                 image_2, 
+                                 save_dir, 
+                                 save_file_name)
 
             if ret == -1:
                 break
@@ -155,4 +160,4 @@ def detect_edge(image):
     
 
 if __name__ == '__main__':
-    create_video()
+    main()
