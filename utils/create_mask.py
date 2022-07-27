@@ -10,7 +10,7 @@ ix, iy = -1, -1
 image = None
 
 
-def draw_pixels(event, x, y, flags, param):
+def draw_pixels(event, x, y, flags, param):  # Type: ignore
 
     global ix, iy, drawing, mode
 

@@ -106,7 +106,7 @@ def fill_horizon_line_top_down(image):
 
     for col in range(width):
         image[0:horizon_line[col][0], col] = (0, 0, 0)
-        image[horizon_line[col][0] + 1:height - 1, col] = (255, 255, 255)
+        image[horizon_line[col][0] + 1:height, col] = (255, 255, 255)
 
     return image
 
