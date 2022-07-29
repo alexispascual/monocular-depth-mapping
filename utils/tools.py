@@ -45,7 +45,7 @@ def show_image(image, image_2=None):
         image = np.concatenate((image, image_2), axis=1)
 
     cv2.imshow('Image', image)
-
+    cv2.moveWindow('Image', 30, 0)
     key = cv2.waitKey(0)
 
     if key == 27:  # Check for ESC key press

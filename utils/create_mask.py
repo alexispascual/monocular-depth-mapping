@@ -37,11 +37,13 @@ def draw_mask(edges, horizon_directory: str, directory: str):
     image = edges
 
     cv2.namedWindow('Edges')
+    cv2.moveWindow('Edges', 400, 400)
     cv2.setMouseCallback('Edges', draw_pixels)
 
     while(1):
         cv2.imshow('Edges', image)
         key = cv2.waitKey(1) & 0xFF
+
         if key == ord('a'):
             mode = not mode
         elif key == ord('d'):

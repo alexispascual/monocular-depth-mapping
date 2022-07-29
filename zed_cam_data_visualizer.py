@@ -150,7 +150,7 @@ def main():
                 if ret == -1:
                     break
             break
-            
+
     cv2.destroyAllWindows()
 
 
