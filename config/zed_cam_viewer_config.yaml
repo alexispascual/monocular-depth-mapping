@@ -18,7 +18,7 @@ flags:
   depth_from_point_cloud: False
   show_edges_from_segmentation: True
 
-  show_images: True
+  show_images: False
   save_images: False
   
   draw_mask_flag: True

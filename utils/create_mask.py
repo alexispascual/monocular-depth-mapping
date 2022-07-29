@@ -60,9 +60,13 @@ def draw_mask(edges, horizon_directory: str, directory: str):
         elif key == ord('g'):
             image = fill_horizon_line_top_down(image)
 
-        elif key == ord('q') or key == 27:
+        elif key == ord('q'):
             cv2.destroyWindow('Edges')
-            break
+            return 0
+
+        elif key == 27:
+            cv2.destroyWindow('Edges')
+            return -1
 
         elif key == ord('s'):
             save_image(image, 

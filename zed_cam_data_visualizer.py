@@ -62,14 +62,20 @@ def main():
             mask = cv2.imread(mask_file)
             pred = cv2.imread(pred_file)
 
-            ret = tools.show_image(image, pred)
-
             if draw_mask_flag:
-                edges = detect_edge(mask)
 
                 name = ''.join(re.split(r'(\d+)', image_file.split("\\")[-1])[1:-1])
+
                 if name not in horizon_files:
-                    draw_mask(edges, horizon_directory, name)
+                    edges = detect_edge(mask)
+                    tools.show_image(image, pred)
+                    ret = draw_mask(edges, horizon_directory, name)
+
+                else:
+                    continue
+
+            elif show_images:
+                ret = tools.show_image(image, pred)
 
             if ret == -1:
                 break
@@ -122,7 +128,6 @@ def main():
                     save_file_name = f'normalized_depth_{directory}.jpg'
 
                 if show_edges:
-
                     edges = detect_edge(image)
 
                     if draw_mask_flag:
@@ -165,6 +170,7 @@ def create_video(data_directory: str, filename: str):
     
     for file in tqdm(file_paths):
         image = cv2.imread(file)
+
         if image is not None:
             video_writer.write(image)
 
