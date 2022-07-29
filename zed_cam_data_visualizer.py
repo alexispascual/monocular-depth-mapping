@@ -89,7 +89,7 @@ def main():
                 # image = cv2.resize(image, (0, 0), None, .5, .5)
                 image_2 = None
                 save_dir = data_directory
-                save_file_name = f'image_2{directory}.jpg'
+                save_file_name = f'image2_{directory}.jpg'
 
                 if show_depth:
                     normalized_depth_map = None
@@ -150,6 +150,8 @@ def main():
                 if ret == -1:
                     break
             break
+            
+    cv2.destroyAllWindows()
 
 
 def create_video(data_directory: str, filename: str):
